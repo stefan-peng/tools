@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Text Transformations</title>
+  <link rel="icon" href="./text-transformations.png" type="image/x-icon" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    /* ===== Minimal inline CSS with light/dark support ===== */
+
+    /* Color tokens */
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --text: #222222;
+      --border: #cccccc;
+      --primary: #2563eb;
+      --primary-hover: #1e4fd7;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1115;
+        --surface: #1a1d24;
+        --text: #e5e7eb;
+        --border: #3a3f4b;
+        --primary: #3b82f6;
+        --primary-hover: #2563eb;
+      }
+    }
+
+    /* Reset */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Base */
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+      padding: 1rem;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* Layout */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: var(--surface);
+      padding: 1rem;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+
+    .row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .col {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    /* Typography */
+    h1 {
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    /* Form elements */
+    input,
+    select,
+    textarea,
+    button {
+      font: inherit;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      width: 100%;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    button {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    /* Utilities */
+    .mt-1 {
+      margin-top: 0.5rem;
+    }
+
+    .mt-2 {
+      margin-top: 1rem;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Text Transformations</h1>
+
+    <div class="row">
+      <div class="col">
+        <label for="value">Enter a value</label>
+        <input id="value" placeholder="Type something…" />
+      </div>
+      <div class="col">
+        <label for="mode">Mode</label>
+        <select id="mode">
+          <option>Uppercase</option>
+          <option>Lowercase</option>
+          <option>Title case</option>
+          <option>Prettify JSON</option>
+          <option>Base64 Encode</option>
+          <option>Base64 Decode</option>
+          <option>URL Encode</option>
+          <option>URL Decode</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-2 text-right">
+      <button onclick="run()">Run</button>
+    </div>
+
+    <div class="mt-2">
+      <label>Output</label>
+      <textarea id="output" rows="3" readonly></textarea>
+    </div>
+  </div>
+
+  <script>
+    function run() {
+      const value = document.getElementById("value").value;
+      const mode = document.getElementById("mode").value;
+      switch (mode) {
+        case "Uppercase":
+          document.getElementById("output").value = value.toUpperCase();
+          break;
+        case "Lowercase":
+          document.getElementById("output").value = value.toLowerCase();
+          break;
+        case "Title case":
+          document.getElementById("output").value = value.replace(/\w\S*/g,
+            (txt) => txt.charAt(0).toUpperCase() + txt.substr(1));
+          break;
+        case "Prettify JSON":
+          try {
+            const obj = JSON.parse(value);
+            document.getElementById("output").value = JSON.stringify(obj, null, 2);
+          } catch (e) {
+            document.getElementById("output").value = "Invalid JSON";
+          }
+          break;
+        case "Base64 Encode":
+          try {
+            document.getElementById("output").value = btoa(value);
+          } catch (e) {
+            document.getElementById("output").value = "Error encoding to Base64";
+          }
+          break;
+        case "Base64 Decode":
+          try {
+            document.getElementById("output").value = atob(value);
+          } catch (e) {
+            document.getElementById("output").value = "Error decoding Base64";
+          }
+          break;
+        case "URL Encode":
+          document.getElementById("output").value = encodeURIComponent(value);
+          break;
+        case "URL Decode":
+          document.getElementById("output").value = decodeURIComponent(value);
+          break;
+        default:
+          document.getElementById("output").value = value;
+      }
+    }
+  </script>
+</body>
+
+</html>
