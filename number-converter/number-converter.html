@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Number Format Converter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    /* Color tokens matching project style */
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --text: #222222;
+      --border: #cccccc;
+      --primary: #2563eb;
+      --primary-hover: #1e4fd7;
+      --error: #dc2626;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1115;
+        --surface: #1a1d24;
+        --text: #e5e7eb;
+        --border: #3a3f4b;
+        --primary: #3b82f6;
+        --primary-hover: #2563eb;
+        --error: #ef4444;
+      }
+    }
+
+    /* Reset & Base */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+      padding: 1rem;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* Layout */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: var(--surface);
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .settings {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .field-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Typography */
+    h1 { font-size: 1.5rem; margin-top: 0; margin-bottom: 1rem; }
+    label { font-weight: 600; display: block; margin-bottom: 0.25rem; font-size: 0.9rem; }
+
+    /* Form elements */
+    input, select, button {
+      font: inherit;
+      padding: 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    input { flex: 1; font-family: 'Courier New', Courier, monospace; }
+    select { width: auto; }
+
+    .copy-btn {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      width: 80px;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+
+    .copy-btn:hover { background: var(--primary-hover); }
+    .copy-btn:active { transform: translateY(1px); }
+
+    /* Status message */
+    #status {
+      min-height: 1.5rem;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      color: var(--error);
+    }
+
+    .note {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Number Format Converter</h1>
+
+    <div class="settings">
+      <div>
+        <label for="bit-width">Bit Width</label>
+        <select id="bit-width" onchange="updateAll()">
+          <option value="8">8-bit</option>
+          <option value="16">16-bit</option>
+          <option value="32" selected>32-bit</option>
+          <option value="64">64-bit</option>
+          <option value="arbitrary">Arbitrary Precision</option>
+        </select>
+      </div>
+      <div>
+        <label for="signed-mode">Mode</label>
+        <select id="signed-mode" onchange="updateAll()">
+          <option value="signed">Signed (Two's Comp)</option>
+          <option value="unsigned">Unsigned</option>
+        </select>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.2rem;">
+        <input type="checkbox" id="pad-output" onchange="updateAll()" style="width: auto;">
+        <label for="pad-output" style="margin-bottom: 0;">Pad output</label>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label for="decimal">Decimal</label>
+      <div class="input-wrapper">
+        <input type="text" id="decimal" placeholder="e.g. 255 or -1" autocomplete="off" oninput="onInputChange('decimal')">
+        <button class="copy-btn" onclick="copyToClipboard('decimal')">Copy</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label for="hex">Hexadecimal (0x)</label>
+      <div class="input-wrapper">
+        <input type="text" id="hex" placeholder="e.g. 0xFF" autocomplete="off" oninput="onInputChange('hex')">
+        <button class="copy-btn" onclick="copyToClipboard('hex')">Copy</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label for="binary">Binary (0b)</label>
+      <div class="input-wrapper">
+        <input type="text" id="binary" placeholder="e.g. 0b11111111" autocomplete="off" oninput="onInputChange('binary')">
+        <button class="copy-btn" onclick="copyToClipboard('binary')">Copy</button>
+      </div>
+    </div>
+
+    <div id="status"></div>
+
+    <div class="note">
+      * Prefix with 0x for hex or 0b for binary. Negative numbers are handled based on selected Bit Width and Mode.
+    </div>
+  </div>
+
+  <script>
+    const els = {
+      decimal: document.getElementById('decimal'),
+      hex: document.getElementById('hex'),
+      binary: document.getElementById('binary'),
+      bitWidth: document.getElementById('bit-width'),
+      signedMode: document.getElementById('signed-mode'),
+      padOutput: document.getElementById('pad-output'),
+      status: document.getElementById('status')
+    };
+
+    function setStatus(msg) {
+      els.status.textContent = msg;
+    }
+
+    function getBitWidth() {
+      const val = els.bitWidth.value;
+      return val === 'arbitrary' ? null : parseInt(val);
+    }
+
+    function isSigned() {
+      return els.signedMode.value === 'signed';
+    }
+
+    function shouldPad() {
+      return els.padOutput.checked && getBitWidth() !== null;
+    }
+
+    // Two's complement handling for BigInt
+    function toTwoComplement(value, width) {
+      if (width === null) return value;
+      const mask = (1n << BigInt(width)) - 1n;
+      return value & mask;
+    }
+
+    function fromTwoComplement(value, width) {
+      if (width === null || !isSigned()) return value;
+      const bigWidth = BigInt(width);
+      const limit = 1n << (bigWidth - 1n);
+      if (value >= limit) {
+        return value - (1n << bigWidth);
+      }
+      return value;
+    }
+
+    function parseInput(input) {
+      input = input.trim().toLowerCase();
+      if (!input) return null;
+
+      try {
+        if (input.startsWith('0x') || input.startsWith('-0x')) {
+          return { value: BigInt(input), format: 'hex' };
+        } else if (input.startsWith('0b') || input.startsWith('-0b')) {
+          return { value: BigInt(input), format: 'binary' };
+        } else if (/^-?[0-9]+$/.test(input)) {
+          return { value: BigInt(input), format: 'decimal' };
+        } else {
+          // Attempt auto-detection if no prefix
+          // Remove negative sign for check
+          const clean = input.startsWith('-') ? input.substring(1) : input;
+          if (/^[0-9a-f]+$/i.test(clean)) {
+             if (/[a-f]/i.test(clean)) return { value: BigInt(input.startsWith('-') ? '-0x' + clean : '0x' + clean), format: 'hex' };
+             return { value: BigInt(input), format: 'decimal' };
+          }
+        }
+      } catch (e) {
+        return { error: 'Invalid format' };
+      }
+      return { error: 'Invalid characters' };
+    }
+
+    function updateAll(sourceId) {
+      const activeEl = sourceId ? els[sourceId] : null;
+      const inputStr = activeEl ? activeEl.value : (els.decimal.value || els.hex.value || els.binary.value);
+      
+      if (!inputStr) {
+        if (!sourceId) {
+            els.decimal.value = '';
+            els.hex.value = '';
+            els.binary.value = '';
+        }
+        setStatus('');
+        return;
+      }
+
+      let parsed = parseInput(inputStr);
+      
+      // If the user typed into hex or binary WITHOUT prefix, force that format
+      if (sourceId === 'hex' && !inputStr.toLowerCase().startsWith('0x')) {
+          try { parsed = { value: BigInt('0x' + inputStr), format: 'hex' }; } catch(e) {}
+      } else if (sourceId === 'binary' && !inputStr.toLowerCase().startsWith('0b')) {
+          try { parsed = { value: BigInt('0b' + inputStr), format: 'binary' }; } catch(e) {}
+      }
+
+      if (!parsed || parsed.error) {
+        setStatus(parsed ? parsed.error : 'Invalid input');
+        return;
+      }
+
+      setStatus('');
+      let val = parsed.value;
+      const width = getBitWidth();
+
+      // If width is fixed, clamp the value
+      if (width !== null) {
+        const bigWidth = BigInt(width);
+        const maxUnsigned = (1n << bigWidth) - 1n;
+        const minSigned = -(1n << (bigWidth - 1n));
+        const maxSigned = (1n << (bigWidth - 1n)) - 1n;
+
+        if (isSigned()) {
+            if (val > maxSigned || val < minSigned) {
+                // If it's a large positive value that fits in unsigned, treat as two's complement bits
+                if (val >= 0n && val <= maxUnsigned) {
+                    val = fromTwoComplement(val, width);
+                } else {
+                    setStatus(`Warning: Value out of range for ${width}-bit signed`);
+                }
+            }
+        } else {
+            if (val > maxUnsigned || val < 0n) {
+                // If negative, convert to two's complement unsigned representation
+                if (val < 0n && val >= minSigned) {
+                    val = toTwoComplement(val, width);
+                } else {
+                    setStatus(`Warning: Value out of range for ${width}-bit unsigned`);
+                }
+            }
+        }
+      }
+
+      // Update fields
+      if (sourceId !== 'decimal') {
+        els.decimal.value = val.toString(10);
+      }
+      
+      if (sourceId !== 'hex') {
+        const hexVal = toTwoComplement(val, width);
+        let hexStr = hexVal.toString(16).toUpperCase();
+        if (hexStr.startsWith('-')) {
+            const rawHex = hexStr.substring(1);
+            els.hex.value = '-0x' + (shouldPad() ? rawHex.padStart(width / 4, '0') : rawHex);
+        } else {
+            els.hex.value = '0x' + (shouldPad() ? hexStr.padStart(width / 4, '0') : hexStr);
+        }
+      }
+      
+      if (sourceId !== 'binary') {
+        const binVal = toTwoComplement(val, width);
+        let binStr = binVal.toString(2);
+        if (binStr.startsWith('-')) {
+            const rawBin = binStr.substring(1);
+            els.binary.value = '-0b' + (shouldPad() ? rawBin.padStart(width, '0') : rawBin);
+        } else {
+            els.binary.value = '0b' + (shouldPad() ? binStr.padStart(width, '0') : binStr);
+        }
+      }
+    }
+
+    function onInputChange(id) {
+        updateAll(id);
+    }
+
+    function copyToClipboard(id) {
+      const el = els[id];
+      el.select();
+      document.execCommand('copy');
+      
+      const btn = el.nextElementSibling;
+      const originalText = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.textContent = originalText;
+      }, 1000);
+    }
+  </script>
+</body>
+
+</html>
