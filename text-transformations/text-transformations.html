@@ -146,6 +146,10 @@
           <option>Lowercase</option>
           <option>Title case</option>
           <option>Prettify JSON</option>
+          <option>Base64 Encode</option>
+          <option>Base64 Decode</option>
+          <option>URL Encode</option>
+          <option>URL Decode</option>
         </select>
       </div>
     </div>
@@ -182,6 +186,26 @@
           } catch (e) {
             document.getElementById("output").value = "Invalid JSON";
           }
+          break;
+        case "Base64 Encode":
+          try {
+            document.getElementById("output").value = btoa(value);
+          } catch (e) {
+            document.getElementById("output").value = "Error encoding to Base64";
+          }
+          break;
+        case "Base64 Decode":
+          try {
+            document.getElementById("output").value = atob(value);
+          } catch (e) {
+            document.getElementById("output").value = "Error decoding Base64";
+          }
+          break;
+        case "URL Encode":
+          document.getElementById("output").value = encodeURIComponent(value);
+          break;
+        case "URL Decode":
+          document.getElementById("output").value = decodeURIComponent(value);
           break;
         default:
           document.getElementById("output").value = value;
