@@ -27,6 +27,31 @@
     button:hover { background: rgba(127,127,127,.12); }
     .tiny { font-size: 12px; opacity: .7; margin-top: 10px; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+    .timer-btn {
+      margin-left: 8px;
+      padding: 2px 8px;
+      font-size: 11px;
+      border-radius: 6px;
+      background: rgba(127,127,127,.1);
+      border: 1px solid rgba(127,127,127,.3);
+      cursor: pointer;
+      vertical-align: middle;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .timer-btn:hover { background: rgba(127,127,127,.2); }
+    .timer-btn.running {
+      background: #2563eb;
+      color: white;
+      border-color: #1d4ed8;
+    }
+    .timer-btn.finished {
+      background: #059669;
+      color: white;
+      border-color: #047857;
+    }
   </style>
 </head>
 <body>
@@ -110,13 +135,13 @@
     steps.push(`Heat water to ${temp}°C. Rinse filter.`);
     steps.push(`Add ${dose}g coffee (Opus ${fmt1(opus)}).`);
     if (bloomSec > 0) {
-      steps.push(`Bloom with ${bloomWater}g for ${bloomSec}s.`);
+      steps.push({ text: `Bloom with ${bloomWater}g for ${bloomSec}s.`, duration: bloomSec });
     }
     steps.push(`Add remaining water to reach ${water}g total.`);
     if (stirs > 0) steps.push(`Stir ${stirs} times.`);
     if (swirls > 0) steps.push(`Swirl ${swirls} time(s).`);
-    steps.push(`Steep until ${mmss(steep)}.`);
-    steps.push(`Press for ${mmss(press)} (total contact ~${mmss(total)}).`);
+    steps.push({ text: `Steep until ${mmss(steep)}.`, duration: steep });
+    steps.push({ text: `Press for ${mmss(press)} (total contact ~${mmss(total)}).`, duration: press });
     if (bypass > 0) steps.push(`Optional: bypass/dilute with ${bypass}g hot water.`);
 
     return {
@@ -175,11 +200,11 @@
     const steps = [];
     steps.push(`Heat water to ${temp}°C. Rinse filter and preheat brewer.`);
     steps.push(`Add ${dose}g coffee (Opus ${fmt1(opus)}).`);
-    steps.push(`Bloom with ${bloomWater}g for ${bloomSec}s.`);
+    steps.push({ text: `Bloom with ${bloomWater}g for ${bloomSec}s.`, duration: bloomSec });
     if (pours === 1) {
       steps.push(`Single continuous pour to ${water}g total.`);
     } else {
-      steps.push(`Do ${pours} pours of ~${pulseVol}g each (after bloom), every ${interval}s, to reach ${water}g total.`);
+      steps.push({ text: `Do ${pours} pours of ~${pulseVol}g each (after bloom), every ${interval}s, to reach ${water}g total.`, duration: interval });
     }
     if (swirls > 0) steps.push(`Swirl ${swirls} time(s) after final pour.`);
     steps.push(`Target total brew time ~${mmss(total)}.`);
@@ -208,9 +233,15 @@
   }
 
   function render(recipe) {
+    clearAllTimers();
     const card = document.getElementById("card");
     const rows = recipe.fields.map(([k, v]) => `<tr><td>${k}</td><td><strong>${v}</strong></td></tr>`).join("");
-    const steps = recipe.steps.map(s => `<li>${s}</li>`).join("");
+    const steps = recipe.steps.map(s => {
+      const text = typeof s === "string" ? s : s.text;
+      const duration = typeof s === "object" ? s.duration : null;
+      const timerBtn = duration ? `<button class="timer-btn" data-duration="${duration}">Start ${mmss(duration)}</button>` : "";
+      return `<li>${text}${timerBtn}</li>`;
+    }).join("");
 
     card.innerHTML = `
       <div class="title">
@@ -229,10 +260,67 @@
       ...recipe.fields.map(([k,v]) => `${k}: ${v}`),
       "",
       "Steps:",
-      ...recipe.steps.map((s,i)=>`${i+1}. ${s}`)
+      ...recipe.steps.map((s,i)=>{
+        const text = typeof s === "string" ? s : s.text;
+        return `${i+1}. ${text}`;
+      })
     ].join("\n");
     card.dataset.plain = plain;
   }
+
+  const activeTimers = new Map();
+
+  function clearAllTimers() {
+    for (const timer of activeTimers.values()) {
+      clearInterval(timer.intervalId);
+    }
+    activeTimers.clear();
+  }
+
+  function handleTimerClick(btn) {
+    if (activeTimers.has(btn)) {
+      const timer = activeTimers.get(btn);
+      clearInterval(timer.intervalId);
+      activeTimers.delete(btn);
+      btn.classList.remove("running", "finished");
+      btn.textContent = `Start ${mmss(btn.dataset.duration)}`;
+      return;
+    }
+
+    const duration = parseInt(btn.dataset.duration, 10);
+    let remaining = duration;
+
+    btn.classList.add("running");
+    btn.classList.remove("finished");
+    btn.textContent = mmss(remaining);
+
+    const intervalId = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(intervalId);
+        activeTimers.delete(btn);
+        btn.classList.remove("running");
+        btn.classList.add("finished");
+        btn.textContent = "Done!";
+        setTimeout(() => {
+          if (!activeTimers.has(btn) && btn.classList.contains("finished")) {
+            btn.classList.remove("finished");
+            btn.textContent = `Start ${mmss(duration)}`;
+          }
+        }, 5000);
+      } else {
+        btn.textContent = mmss(remaining);
+      }
+    }, 1000);
+
+    activeTimers.set(btn, { intervalId });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("timer-btn")) {
+      handleTimerClick(e.target);
+    }
+  });
 
   // init on page load
   const recipe = generate();
