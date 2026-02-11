@@ -114,6 +114,16 @@
     button:hover {
       background: var(--primary-hover);
     }
+    
+    button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    button.secondary:hover {
+      background: var(--bg);
+    }
 
     /* Utilities */
     .mt-1 {
@@ -135,82 +145,118 @@
     <h1>Text Transformations</h1>
 
     <div class="row">
-      <div class="col">
-        <label for="value">Enter a value</label>
-        <input id="value" placeholder="Type something…" />
-      </div>
-      <div class="col">
-        <label for="mode">Mode</label>
-        <select id="mode">
-          <option>Uppercase</option>
-          <option>Lowercase</option>
-          <option>Title case</option>
-          <option>Prettify JSON</option>
-          <option>Base64 Encode</option>
-          <option>Base64 Decode</option>
-          <option>URL Encode</option>
-          <option>URL Decode</option>
-        </select>
+      <div class="col" style="flex: 1 1 100%">
+        <label for="input">Input</label>
+        <textarea id="input" rows="5" placeholder="Type or paste text here…"></textarea>
       </div>
     </div>
 
-    <div class="mt-2 text-right">
-      <button onclick="run()">Run</button>
+    <div class="row mt-2" style="align-items: flex-end">
+      <div class="col">
+        <label for="mode">Transformation</label>
+        <select id="mode">
+          <option value="uppercase">Uppercase</option>
+          <option value="lowercase">Lowercase</option>
+          <option value="titlecase">Title Case</option>
+          <option value="json">Prettify JSON</option>
+          <option value="base64-encode">Base64 Encode</option>
+          <option value="base64-decode">Base64 Decode</option>
+          <option value="url-encode">URL Encode</option>
+          <option value="url-decode">URL Decode</option>
+        </select>
+      </div>
+      <div class="col" style="flex: 0 0 auto">
+        <button id="run-btn">Run Transformation</button>
+      </div>
     </div>
 
     <div class="mt-2">
-      <label>Output</label>
-      <textarea id="output" rows="3" readonly></textarea>
+      <label for="output">Output</label>
+      <textarea id="output" rows="5" readonly></textarea>
+      <div class="mt-1 text-right">
+        <button id="copy-btn" class="secondary" style="width: auto">Copy Output</button>
+      </div>
     </div>
   </div>
 
   <script>
+    const els = {
+      input: document.getElementById('input'),
+      output: document.getElementById('output'),
+      mode: document.getElementById('mode'),
+      runBtn: document.getElementById('run-btn'),
+      copyBtn: document.getElementById('copy-btn')
+    };
+
     function run() {
-      const value = document.getElementById("value").value;
-      const mode = document.getElementById("mode").value;
-      switch (mode) {
-        case "Uppercase":
-          document.getElementById("output").value = value.toUpperCase();
-          break;
-        case "Lowercase":
-          document.getElementById("output").value = value.toLowerCase();
-          break;
-        case "Title case":
-          document.getElementById("output").value = value.replace(/\w\S*/g,
-            (txt) => txt.charAt(0).toUpperCase() + txt.substr(1));
-          break;
-        case "Prettify JSON":
-          try {
-            const obj = JSON.parse(value);
-            document.getElementById("output").value = JSON.stringify(obj, null, 2);
-          } catch (e) {
-            document.getElementById("output").value = "Invalid JSON";
-          }
-          break;
-        case "Base64 Encode":
-          try {
-            document.getElementById("output").value = btoa(value);
-          } catch (e) {
-            document.getElementById("output").value = "Error encoding to Base64";
-          }
-          break;
-        case "Base64 Decode":
-          try {
-            document.getElementById("output").value = atob(value);
-          } catch (e) {
-            document.getElementById("output").value = "Error decoding Base64";
-          }
-          break;
-        case "URL Encode":
-          document.getElementById("output").value = encodeURIComponent(value);
-          break;
-        case "URL Decode":
-          document.getElementById("output").value = decodeURIComponent(value);
-          break;
-        default:
-          document.getElementById("output").value = value;
+      const value = els.input.value;
+      const mode = els.mode.value;
+      let result = '';
+
+      try {
+        switch (mode) {
+          case 'uppercase':
+            result = value.toUpperCase();
+            break;
+          case 'lowercase':
+            result = value.toLowerCase();
+            break;
+          case 'titlecase':
+            // Simple title case: capitalize first letter of each word
+            result = value.replace(/\w\S*/g, (txt) => {
+              return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();
+            });
+            break;
+          case 'json':
+            if (!value.trim()) {
+              result = '';
+            } else {
+              const obj = JSON.parse(value);
+              result = JSON.stringify(obj, null, 2);
+            }
+            break;
+          case 'base64-encode':
+            result = btoa(value);
+            break;
+          case 'base64-decode':
+            result = atob(value);
+            break;
+          case 'url-encode':
+            result = encodeURIComponent(value);
+            break;
+          case 'url-decode':
+            result = decodeURIComponent(value);
+            break;
+          default:
+            result = value;
+        }
+      } catch (e) {
+        result = `Error: ${e.message}`;
       }
+
+      els.output.value = result;
     }
+
+    function copyOutput() {
+      const text = els.output.value;
+      if (!text) return;
+      
+      navigator.clipboard.writeText(text).then(() => {
+        const original = els.copyBtn.textContent;
+        els.copyBtn.textContent = 'Copied!';
+        setTimeout(() => els.copyBtn.textContent = original, 1500);
+      });
+    }
+
+    els.runBtn.addEventListener('click', run);
+    els.copyBtn.addEventListener('click', copyOutput);
+    
+    // Allow Cmd+Enter to run in textarea
+    els.input.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        run();
+      }
+    });
   </script>
 </body>
 

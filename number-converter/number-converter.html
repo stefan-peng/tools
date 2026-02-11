@@ -122,7 +122,7 @@
     <div class="settings">
       <div>
         <label for="bit-width">Bit Width</label>
-        <select id="bit-width" onchange="updateAll()">
+        <select id="bit-width">
           <option value="8">8-bit</option>
           <option value="16">16-bit</option>
           <option value="32" selected>32-bit</option>
@@ -132,13 +132,13 @@
       </div>
       <div>
         <label for="signed-mode">Mode</label>
-        <select id="signed-mode" onchange="updateAll()">
+        <select id="signed-mode">
           <option value="signed">Signed (Two's Comp)</option>
           <option value="unsigned">Unsigned</option>
         </select>
       </div>
       <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.2rem;">
-        <input type="checkbox" id="pad-output" onchange="updateAll()" style="width: auto;">
+        <input type="checkbox" id="pad-output" style="width: auto;">
         <label for="pad-output" style="margin-bottom: 0;">Pad output</label>
       </div>
     </div>
@@ -146,24 +146,24 @@
     <div class="field-group">
       <label for="decimal">Decimal</label>
       <div class="input-wrapper">
-        <input type="text" id="decimal" placeholder="e.g. 255 or -1" autocomplete="off" oninput="onInputChange('decimal')">
-        <button class="copy-btn" onclick="copyToClipboard('decimal')">Copy</button>
+        <input type="text" id="decimal" placeholder="e.g. 255 or -1" autocomplete="off">
+        <button class="copy-btn" data-target="decimal">Copy</button>
       </div>
     </div>
 
     <div class="field-group">
       <label for="hex">Hexadecimal (0x)</label>
       <div class="input-wrapper">
-        <input type="text" id="hex" placeholder="e.g. 0xFF" autocomplete="off" oninput="onInputChange('hex')">
-        <button class="copy-btn" onclick="copyToClipboard('hex')">Copy</button>
+        <input type="text" id="hex" placeholder="e.g. 0xFF" autocomplete="off">
+        <button class="copy-btn" data-target="hex">Copy</button>
       </div>
     </div>
 
     <div class="field-group">
       <label for="binary">Binary (0b)</label>
       <div class="input-wrapper">
-        <input type="text" id="binary" placeholder="e.g. 0b11111111" autocomplete="off" oninput="onInputChange('binary')">
-        <button class="copy-btn" onclick="copyToClipboard('binary')">Copy</button>
+        <input type="text" id="binary" placeholder="e.g. 0b11111111" autocomplete="off">
+        <button class="copy-btn" data-target="binary">Copy</button>
       </div>
     </div>
 
@@ -333,22 +333,35 @@
       }
     }
 
-    function onInputChange(id) {
-        updateAll(id);
+    function copyToClipboard(id, btn) {
+      const el = els[id];
+      const text = el.value;
+      if (!text) return;
+      
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => {
+          btn.textContent = originalText;
+        }, 1000);
+      });
     }
 
-    function copyToClipboard(id) {
-      const el = els[id];
-      el.select();
-      document.execCommand('copy');
-      
-      const btn = el.nextElementSibling;
-      const originalText = btn.textContent;
-      btn.textContent = 'Copied!';
-      setTimeout(() => {
-        btn.textContent = originalText;
-      }, 1000);
-    }
+    // Event Listeners
+    els.bitWidth.addEventListener('change', () => updateAll());
+    els.signedMode.addEventListener('change', () => updateAll());
+    els.padOutput.addEventListener('change', () => updateAll());
+
+    ['decimal', 'hex', 'binary'].forEach(id => {
+      els[id].addEventListener('input', () => updateAll(id));
+    });
+
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const targetId = e.target.getAttribute('data-target');
+        copyToClipboard(targetId, e.target);
+      });
+    });
   </script>
 </body>
 

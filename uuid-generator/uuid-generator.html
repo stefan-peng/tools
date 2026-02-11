@@ -155,7 +155,7 @@
         <input id="count" type="number" value="1" min="1" max="100" />
       </div>
       <div class="col">
-        <button onclick="generate()">Generate UUID(s)</button>
+        <button id="generate-btn">Generate UUID(s)</button>
       </div>
     </div>
 
@@ -163,35 +163,43 @@
       <label>Result</label>
       <div id="output" class="output-area"></div>
       <div class="mt-1 text-right">
-          <button class="secondary" onclick="copyToClipboard()" style="width: auto;">Copy to Clipboard</button>
+          <button id="copy-btn" class="secondary" style="width: auto;">Copy to Clipboard</button>
       </div>
     </div>
   </div>
 
   <script>
+    const els = {
+      count: document.getElementById("count"),
+      output: document.getElementById("output"),
+      generateBtn: document.getElementById("generate-btn"),
+      copyBtn: document.getElementById("copy-btn")
+    };
+
     function generate() {
-      const count = parseInt(document.getElementById("count").value) || 1;
-      const outputDiv = document.getElementById("output");
+      const count = parseInt(els.count.value) || 1;
       const uuids = [];
 
       for (let i = 0; i < count; i++) {
         uuids.push(crypto.randomUUID());
       }
 
-      outputDiv.textContent = uuids.join('\n');
+      els.output.textContent = uuids.join('\n');
     }
 
     function copyToClipboard() {
-      const outputText = document.getElementById("output").textContent;
+      const outputText = els.output.textContent;
       if (!outputText) return;
       
       navigator.clipboard.writeText(outputText).then(() => {
-        const btn = document.querySelector('button.secondary');
-        const originalText = btn.textContent;
-        btn.textContent = "Copied!";
-        setTimeout(() => btn.textContent = originalText, 1500);
+        const originalText = els.copyBtn.textContent;
+        els.copyBtn.textContent = "Copied!";
+        setTimeout(() => els.copyBtn.textContent = originalText, 1500);
       });
     }
+
+    els.generateBtn.addEventListener("click", generate);
+    els.copyBtn.addEventListener("click", copyToClipboard);
 
     // Generate one on load
     generate();
