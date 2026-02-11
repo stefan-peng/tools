@@ -5,27 +5,101 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Random Coffee Recipe (AeroPress + Pour-over)</title>
   <style>
-    :root { color-scheme: light dark; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 24px; line-height: 1.35; }
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f7fa;
+      --text: #121826;
+      --muted: #526075;
+      --card-bg: #ffffff;
+      --border: rgba(112, 122, 140, 0.35);
+      --btn-hover: rgba(112, 122, 140, 0.14);
+      --timer-bg: rgba(112, 122, 140, 0.1);
+      --timer-border: rgba(112, 122, 140, 0.3);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d111a;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --card-bg: #151b28;
+        --border: rgba(148, 163, 184, 0.35);
+        --btn-hover: rgba(148, 163, 184, 0.2);
+        --timer-bg: rgba(148, 163, 184, 0.16);
+        --timer-border: rgba(148, 163, 184, 0.4);
+      }
+    }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.35;
+      background: var(--bg);
+      color: var(--text);
+    }
     .wrap { max-width: 920px; margin: 0 auto; }
     header { display: flex; gap: 12px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
     h1 { font-size: 20px; margin: 0; }
-    .sub { opacity: .75; font-size: 13px; margin-top: 6px; }
+    .sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
     .grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 18px; }
     @media (min-width: 860px) { .grid { grid-template-columns: 1fr 1fr; } }
-    .card { border: 1px solid rgba(127,127,127,.35); border-radius: 14px; padding: 16px; }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      background: var(--card-bg);
+    }
     .title { display:flex; justify-content: space-between; gap: 10px; align-items: baseline; }
     h2 { font-size: 16px; margin: 0; }
-    .pill { font-size: 12px; padding: 3px 10px; border: 1px solid rgba(127,127,127,.35); border-radius: 999px; opacity: .9; white-space: nowrap; }
+    .pill {
+      font-size: 12px;
+      padding: 3px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
     td { padding: 6px 0; vertical-align: top; }
-    td:first-child { width: 46%; opacity: .8; }
+    td:first-child { width: 46%; color: var(--muted); }
     .steps { margin: 10px 0 0 0; padding-left: 18px; }
     .steps li { margin: 6px 0; }
     .actions { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-    button { cursor: pointer; border-radius: 12px; border: 1px solid rgba(127,127,127,.35); background: transparent; padding: 9px 12px; font-size: 14px; }
-    button:hover { background: rgba(127,127,127,.12); }
-    .tiny { font-size: 12px; opacity: .7; margin-top: 10px; }
+    button {
+      cursor: pointer;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      padding: 9px 12px;
+      font-size: 14px;
+    }
+    button:hover { background: var(--btn-hover); }
+    .roast-card { margin-top: 16px; }
+    .roast-group {
+      border: 0;
+      margin: 10px 0 0 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .roast-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 12px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 14px;
+    }
+    .roast-option.active { background: var(--btn-hover); }
+    .roast-option input {
+      margin: 0;
+      accent-color: #2563eb;
+    }
+    .tiny { font-size: 12px; color: var(--muted); margin-top: 10px; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
 
     .timer-btn {
@@ -33,15 +107,15 @@
       padding: 2px 8px;
       font-size: 11px;
       border-radius: 6px;
-      background: rgba(127,127,127,.1);
-      border: 1px solid rgba(127,127,127,.3);
+      background: var(--timer-bg);
+      border: 1px solid var(--timer-border);
       cursor: pointer;
       vertical-align: middle;
       display: inline-flex;
       align-items: center;
       gap: 4px;
     }
-    .timer-btn:hover { background: rgba(127,127,127,.2); }
+    .timer-btn:hover { background: var(--btn-hover); }
     .timer-btn.running {
       background: #2563eb;
       color: white;
@@ -52,6 +126,17 @@
       color: white;
       border-color: #047857;
     }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
   </style>
 </head>
 <body>
@@ -59,13 +144,27 @@
   <header>
     <div>
       <h1>Random Coffee Recipe Generator</h1>
-      <div class="sub">Reload the page for a new recipe. Uses Fellow Opus dial numbers.</div>
+      <div class="sub">Choose your available roasts, then generate a roast-tuned recipe. Uses Fellow Opus dial numbers.</div>
     </div>
     <div class="actions">
       <button id="regen" title="Generate without reloading">Generate new</button>
       <button id="copy" title="Copy to clipboard">Copy</button>
     </div>
   </header>
+
+  <section class="card roast-card">
+    <div class="title">
+      <h2>Available Bean Roasts</h2>
+      <span class="pill">generation pool</span>
+    </div>
+    <fieldset class="roast-group" id="roast-group">
+      <legend class="sr-only">Select available roasts</legend>
+      <label class="roast-option"><input type="checkbox" name="roast" value="light">Light</label>
+      <label class="roast-option"><input type="checkbox" name="roast" value="medium">Medium</label>
+      <label class="roast-option"><input type="checkbox" name="roast" value="dark">Dark</label>
+    </fieldset>
+    <div class="tiny">Random generation first chooses one enabled roast, then samples method parameters tuned for that roast.</div>
+  </section>
 
   <div class="grid">
     <section class="card" id="card"></section>
@@ -76,6 +175,7 @@
       </div>
       <ul class="steps">
         <li>Values are sampled uniformly within ranges.</li>
+        <li>Roast is sampled uniformly from enabled options (<span class="mono">light / medium / dark</span>).</li>
         <li>Pour-over total time is constrained to <span class="mono">2:00–5:30</span> (resampled if outside).</li>
         <li>AeroPress avoids extreme combos (too fine + high dose) by resampling if <span class="mono">Opus &lt; 5.0</span> and <span class="mono">dose &gt; 18g</span>.</li>
         <li>Ratio-driven: dose and ratio are picked first; water is computed.</li>
@@ -85,6 +185,7 @@
   </div>
 
   <div class="tiny" id="seedline"></div>
+  <div id="status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 </div>
 
 <script>
@@ -93,143 +194,334 @@
   const rand = (a, b) => a + Math.random() * (b - a);
   const rint = (a, b) => Math.round(rand(a, b));
   const rstep = (a, b, step) => Math.round(rand(a, b) / step) * step;
+  const choose = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const midpoint = (a, b) => (a + b) / 2;
+  const midRange = ([a, b]) => midpoint(a, b);
+  const midIntRange = (range) => Math.round(midRange(range));
+  const midStepRange = (range, step) => Math.round(midRange(range) / step) * step;
   const fmt1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
-  const fmt0 = (x) => String(Math.round(x));
+  const roastLabel = (roast) => roast.charAt(0).toUpperCase() + roast.slice(1);
   const mmss = (sec) => {
     sec = Math.round(sec);
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     return `${m}:${String(s).padStart(2, "0")}`;
   };
+  const MAX_ATTEMPTS = 250;
+  const STORAGE_SETTINGS_KEY = "coffee.settings.v1";
+  const ROASTS = Object.freeze(["light", "medium", "dark"]);
+  const ROAST_PROFILES = Object.freeze({
+    light: {
+      aeropress: { dose: [12, 18.5], ratio: [14, 18], temp: [90, 96], opus: [5.2, 7.8], steep: [75, 170], press: [25, 55], bloomSec: [8, 30], stirs: [4, 18], swirls: [0, 3], bypass: [0, 80], bloomMult: [2.2, 3.1] },
+      pourover: { dose: [14, 22], ratio: [15.5, 18], temp: [92, 99], opus: [5.4, 7.8], bloomSec: [35, 60], bloomMult: [2.2, 3.5], pours: [2, 5], interval: [28, 58], swirls: [0, 2] }
+    },
+    medium: {
+      aeropress: { dose: [12, 20], ratio: [13, 17], temp: [86, 94], opus: [5.3, 8.2], steep: [60, 145], press: [20, 50], bloomSec: [5, 25], stirs: [2, 14], swirls: [0, 3], bypass: [0, 110], bloomMult: [2.0, 2.9] },
+      pourover: { dose: [12, 22], ratio: [14.5, 17], temp: [89, 96], opus: [5.6, 8.3], bloomSec: [30, 55], bloomMult: [2.0, 3.2], pours: [2, 4], interval: [24, 52], swirls: [0, 2] }
+    },
+    dark: {
+      aeropress: { dose: [12, 20], ratio: [12, 15.5], temp: [80, 89], opus: [5.8, 8.5], steep: [45, 110], press: [20, 45], bloomSec: [0, 15], stirs: [0, 10], swirls: [0, 2], bypass: [0, 140], bloomMult: [1.8, 2.5] },
+      pourover: { dose: [12, 20], ratio: [13.5, 16], temp: [84, 92], opus: [6.0, 8.5], bloomSec: [25, 45], bloomMult: [1.8, 2.8], pours: [1, 3], interval: [20, 42], swirls: [0, 1] }
+    }
+  });
+  let settings = loadSettings();
+  const statusEl = document.getElementById("status");
+  const roastInputs = Array.from(document.querySelectorAll('input[name="roast"]'));
+
+  function sanitizeRoasts(rawRoasts) {
+    if (!Array.isArray(rawRoasts)) return [...ROASTS];
+    const clean = [...new Set(rawRoasts.filter((roast) => ROASTS.includes(roast)))];
+    return clean.length > 0 ? clean : [...ROASTS];
+  }
+
+  function loadSettings() {
+    const fallback = { version: 1, roasts: [...ROASTS], updatedAt: new Date().toISOString() };
+    try {
+      const raw = localStorage.getItem(STORAGE_SETTINGS_KEY);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return {
+        version: 1,
+        roasts: sanitizeRoasts(parsed && parsed.roasts),
+        updatedAt: typeof (parsed && parsed.updatedAt) === "string" ? parsed.updatedAt : fallback.updatedAt
+      };
+    } catch {
+      return fallback;
+    }
+  }
+
+  function saveSettings(nextSettings) {
+    try {
+      localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(nextSettings));
+    } catch {
+      // ignore storage failures (private mode/quota)
+    }
+  }
+
+  function applyRoastSelectionUI(inputs = roastInputs) {
+    for (const input of inputs) {
+      input.checked = settings.roasts.includes(input.value);
+      const label = input.closest("label");
+      if (label) label.classList.toggle("active", input.checked);
+    }
+  }
+
+  function setupRoastControls() {
+    const inputs = roastInputs;
+    applyRoastSelectionUI();
+
+    for (const input of inputs) {
+      input.addEventListener("change", () => {
+        const enabled = inputs.filter((el) => el.checked).map((el) => el.value);
+        if (enabled.length === 0) {
+          input.checked = true;
+          applyRoastSelectionUI();
+          announce("At least one roast must remain selected.");
+          return;
+        }
+        settings = {
+          version: 1,
+          roasts: sanitizeRoasts(enabled),
+          updatedAt: new Date().toISOString()
+        };
+        saveSettings(settings);
+        applyRoastSelectionUI();
+        render(generate());
+        announce(`Roast pool updated: ${settings.roasts.map(roastLabel).join(", ")}.`);
+      });
+    }
+  }
+
+  function announce(message) {
+    if (!statusEl) return;
+    statusEl.textContent = "";
+    requestAnimationFrame(() => {
+      statusEl.textContent = message;
+    });
+  }
+
+  function buildAeropressRecipe(config) {
+    const total = config.steep + config.press;
+    const steps = [];
+    steps.push(`Heat water to ${config.temp}°C. Rinse filter.`);
+    steps.push(`Add ${config.dose}g coffee (Opus ${fmt1(config.opus)}).`);
+    if (config.bloomSec > 0) {
+      steps.push({ text: `Bloom with ${config.bloomWater}g for ${config.bloomSec}s.`, duration: config.bloomSec });
+    }
+    steps.push(`Add remaining water to reach ${config.water}g total.`);
+    if (config.stirs > 0) steps.push(`Stir ${config.stirs} times.`);
+    if (config.swirls > 0) steps.push(`Swirl ${config.swirls} time(s).`);
+    steps.push({ text: `Steep until ${mmss(config.steep)}.`, duration: config.steep });
+    steps.push({ text: `Press for ${mmss(config.press)} (total contact ~${mmss(total)}).`, duration: config.press });
+    if (config.bypass > 0) steps.push(`Optional: bypass/dilute with ${config.bypass}g hot water.`);
+
+    return {
+      methodName: "AeroPress",
+      metaPill: `${config.method} • ${roastLabel(config.roast)} roast`,
+      roast: config.roast,
+      fields: [
+        ["Roast", roastLabel(config.roast)],
+        ["Dose", `${fmt1(config.dose)} g`],
+        ["Ratio", `1:${fmt1(config.ratio)}`],
+        ["Water (brew)", `${config.water} g`],
+        ["Temperature", `${config.temp} °C`],
+        ["Grind (Fellow Opus)", fmt1(config.opus)],
+        ["Steep", mmss(config.steep)],
+        ["Press", mmss(config.press)],
+        ["Bloom", config.bloomSec > 0 ? `${config.bloomSec}s (${config.bloomWater}g)` : "none"],
+        ["Agitation", `stirs ${config.stirs}, swirls ${config.swirls}`],
+        ["Bypass", config.bypass > 0 ? `${config.bypass} g` : "none"]
+      ],
+      steps
+    };
+  }
+
+  function computePourSchedule(remaining, pours) {
+    if (pours <= 1) {
+      return { label: `${remaining}g continuous pour` };
+    }
+    const base = Math.floor(remaining / pours);
+    const extra = remaining - base * pours;
+    const high = base + 1;
+    const label = extra === 0
+      ? `${pours} x ${base}g`
+      : `${extra} x ${high}g + ${pours - extra} x ${base}g`;
+    return { label };
+  }
+
+  function estimatePouroverDrawdown(opus, water, dose) {
+    const grindFactor = (8.5 - opus) / (8.5 - 5.0); // finer => larger factor
+    const drawdown = 90 + 90 * grindFactor + (water - 250) * 0.25 + (dose - 15) * 2;
+    return clamp(drawdown, 60, 240);
+  }
+
+  function clampPouroverBloomWater(water, bloomWaterTarget) {
+    return Math.min(bloomWaterTarget, Math.max(0, water - 40));
+  }
+
+  function buildPouroverRecipe(config) {
+    const pourSchedule = computePourSchedule(config.remaining, config.pours);
+    const steps = [];
+    steps.push(`Heat water to ${config.temp}°C. Rinse filter and preheat brewer.`);
+    steps.push(`Add ${config.dose}g coffee (Opus ${fmt1(config.opus)}).`);
+    steps.push({ text: `Bloom with ${config.bloomWater}g for ${config.bloomSec}s.`, duration: config.bloomSec });
+    if (config.pours === 1) {
+      steps.push(`Single continuous pour of ${config.remaining}g after bloom to reach ${config.water}g total.`);
+    } else {
+      steps.push({
+        text: `After bloom, do ${pourSchedule.label} every ${config.interval}s to reach ${config.water}g total.`,
+        duration: config.interval
+      });
+    }
+    if (config.swirls > 0) steps.push(`Swirl ${config.swirls} time(s) after final pour.`);
+    steps.push(`Target total brew time ~${mmss(config.total)}.`);
+
+    return {
+      methodName: "Pour-over",
+      metaPill: `V60 / flat-bottom • ${roastLabel(config.roast)} roast`,
+      roast: config.roast,
+      fields: [
+        ["Roast", roastLabel(config.roast)],
+        ["Dose", `${fmt1(config.dose)} g`],
+        ["Ratio", `1:${fmt1(config.ratio)}`],
+        ["Water (total)", `${config.water} g`],
+        ["Temperature", `${config.temp} °C`],
+        ["Grind (Fellow Opus)", fmt1(config.opus)],
+        ["Bloom", `${config.bloomSec}s (${config.bloomWater}g)`],
+        ["Pours", `${config.pours}${config.pours > 1 ? ` (interval ${config.interval}s)` : " (continuous)"}`],
+        ["Pulse plan", pourSchedule.label],
+        ["Swirls", String(config.swirls)],
+        ["Target total time", mmss(config.total)]
+      ],
+      steps
+    };
+  }
 
   // -------- recipe generation --------
   function pickMethod() {
     return Math.random() < 0.5 ? "AeroPress" : "Pour-over";
   }
 
-  function genAeropress() {
-    // Ranges (from earlier: Aeropress: dose 12–20g; ratio 1:12–1:18; temp 80–96C; Opus 4.5–8.5; steep 45–180s; press 20–60s; stirs 0–20; swirls 0–3; bloom 0–30s; bypass 0–120g)
-    let dose = rstep(12, 20, 0.5);
-    let ratio = rstep(12, 18, 0.5);
-    let water = Math.round(dose * ratio);
-
-    let temp = rint(80, 96);
-    let opus = rstep(4.5, 8.5, 0.1);
-    let steep = rint(45, 180);
-    let press = rint(20, 60);
-
-    // Technique
-    let method = Math.random() < 0.5 ? "standard" : "inverted";
-    let bloomSec = rint(0, 30);
-    let stirs = rint(0, 20);
-    let swirls = rint(0, 3);
-    let bypass = rstep(0, 120, 5);
-
-    // Guardrail: avoid very fine + high dose
-    if (opus < 5.0 && dose > 18) return genAeropress();
-
-    const total = steep + press;
-    const bloomWater = bloomSec > 0 ? Math.round(dose * rand(2.0, 3.0)) : 0;
-
-    const steps = [];
-    steps.push(`Heat water to ${temp}°C. Rinse filter.`);
-    steps.push(`Add ${dose}g coffee (Opus ${fmt1(opus)}).`);
-    if (bloomSec > 0) {
-      steps.push({ text: `Bloom with ${bloomWater}g for ${bloomSec}s.`, duration: bloomSec });
-    }
-    steps.push(`Add remaining water to reach ${water}g total.`);
-    if (stirs > 0) steps.push(`Stir ${stirs} times.`);
-    if (swirls > 0) steps.push(`Swirl ${swirls} time(s).`);
-    steps.push({ text: `Steep until ${mmss(steep)}.`, duration: steep });
-    steps.push({ text: `Press for ${mmss(press)} (total contact ~${mmss(total)}).`, duration: press });
-    if (bypass > 0) steps.push(`Optional: bypass/dilute with ${bypass}g hot water.`);
-
-    return {
-      methodName: "AeroPress",
-      metaPill: method,
-      fields: [
-        ["Dose", `${fmt1(dose)} g`],
-        ["Ratio", `1:${fmt1(ratio)}`],
-        ["Water (brew)", `${water} g`],
-        ["Temperature", `${temp} °C`],
-        ["Grind (Fellow Opus)", fmt1(opus)],
-        ["Steep", mmss(steep)],
-        ["Press", mmss(press)],
-        ["Bloom", bloomSec > 0 ? `${bloomSec}s (${bloomWater}g)` : "none"],
-        ["Agitation", `stirs ${stirs}, swirls ${swirls}`],
-        ["Bypass", bypass > 0 ? `${bypass} g` : "none"]
-      ],
-      steps
-    };
+  function pickRoast() {
+    const enabledRoasts = sanitizeRoasts(settings.roasts);
+    return choose(enabledRoasts);
   }
 
-  function genPourover() {
-    // Pour-over ranges: dose 12–22g; ratio 1:14–1:18; temp 88–99C; Opus 5.0–8.5
-    // Bloom: 30–60s; bloom water 2.0–3.5x dose; pours 1–5; interval 20–60s; swirls 0–2
-    // Total time constraint: 2:30–4:30 (we'll constrain to 2:00–5:30 as guardrail)
-    let dose = rstep(12, 22, 0.5);
-    let ratio = rstep(14, 18, 0.5);
-    let water = Math.round(dose * ratio);
+  function genAeropress(roast) {
+    const profile = ROAST_PROFILES[roast].aeropress;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const dose = rstep(profile.dose[0], profile.dose[1], 0.5);
+      const ratio = rstep(profile.ratio[0], profile.ratio[1], 0.5);
+      const water = Math.round(dose * ratio);
+      const temp = rint(profile.temp[0], profile.temp[1]);
+      const opus = rstep(profile.opus[0], profile.opus[1], 0.1);
+      const steep = rint(profile.steep[0], profile.steep[1]);
+      const press = rint(profile.press[0], profile.press[1]);
+      const method = Math.random() < 0.5 ? "standard" : "inverted";
+      const bloomSec = rint(profile.bloomSec[0], profile.bloomSec[1]);
+      const stirs = rint(profile.stirs[0], profile.stirs[1]);
+      const swirls = rint(profile.swirls[0], profile.swirls[1]);
+      const bypass = rstep(profile.bypass[0], profile.bypass[1], 5);
+      const bloomWater = bloomSec > 0 ? Math.round(dose * rand(profile.bloomMult[0], profile.bloomMult[1])) : 0;
 
-    let temp = rint(88, 99);
-    let opus = rstep(5.0, 8.5, 0.1);
+      // Guardrail: avoid very fine + high dose.
+      if (opus < 5.0 && dose > 18) continue;
 
-    let bloomSec = rint(30, 60);
-    let bloomWater = Math.round(dose * rand(2.0, 3.5));
-    let pours = rint(1, 5);
-    let interval = pours > 1 ? rint(20, 60) : 0;
-    let swirls = rint(0, 2);
-
-    // Simple time model to keep outputs plausible:
-    // totalTime ≈ bloom + (pours-1)*interval + drawdown
-    // drawdown depends on grind/dose/water: coarser -> faster, larger water -> longer
-    const grindFactor = (8.5 - opus) / (8.5 - 5.0); // finer => larger factor
-    let drawdown = 90 + 90 * grindFactor + (water - 250) * 0.25 + (dose - 15) * 2;
-    drawdown = clamp(drawdown, 60, 240);
-
-    let total = bloomSec + (pours > 1 ? (pours - 1) * interval : 0) + drawdown;
-
-    // Guardrail: constrain total time
-    if (total < 120 || total > 330) return genPourover();
-
-    // Pour schedule suggestion
-    const remaining = Math.max(0, water - bloomWater);
-    const pulses = pours;
-    const pulseVol = pulses > 0 ? Math.round(remaining / pulses) : 0;
-
-    const steps = [];
-    steps.push(`Heat water to ${temp}°C. Rinse filter and preheat brewer.`);
-    steps.push(`Add ${dose}g coffee (Opus ${fmt1(opus)}).`);
-    steps.push({ text: `Bloom with ${bloomWater}g for ${bloomSec}s.`, duration: bloomSec });
-    if (pours === 1) {
-      steps.push(`Single continuous pour to ${water}g total.`);
-    } else {
-      steps.push({ text: `Do ${pours} pours of ~${pulseVol}g each (after bloom), every ${interval}s, to reach ${water}g total.`, duration: interval });
+      return buildAeropressRecipe({
+        roast, dose, ratio, water, temp, opus, steep, press, method, bloomSec, bloomWater, stirs, swirls, bypass
+      });
     }
-    if (swirls > 0) steps.push(`Swirl ${swirls} time(s) after final pour.`);
-    steps.push(`Target total brew time ~${mmss(total)}.`);
 
-    return {
-      methodName: "Pour-over",
-      metaPill: "V60 / flat-bottom",
-      fields: [
-        ["Dose", `${fmt1(dose)} g`],
-        ["Ratio", `1:${fmt1(ratio)}`],
-        ["Water (total)", `${water} g`],
-        ["Temperature", `${temp} °C`],
-        ["Grind (Fellow Opus)", fmt1(opus)],
-        ["Bloom", `${bloomSec}s (${bloomWater}g)`],
-        ["Pours", `${pours}${pours > 1 ? ` (interval ${interval}s)` : " (continuous)"}`],
-        ["Swirls", String(swirls)],
-        ["Target total time", mmss(total)]
-      ],
-      steps
-    };
+    // Deterministic fallback if random constraints fail repeatedly.
+    const dose = midStepRange(profile.dose, 0.5);
+    const ratio = midStepRange(profile.ratio, 0.5);
+    const bloomSec = midIntRange(profile.bloomSec);
+    return buildAeropressRecipe({
+      roast,
+      dose,
+      ratio,
+      water: Math.round(dose * ratio),
+      temp: midIntRange(profile.temp),
+      opus: midStepRange(profile.opus, 0.1),
+      steep: midIntRange(profile.steep),
+      press: midIntRange(profile.press),
+      method: "standard",
+      bloomSec,
+      bloomWater: bloomSec > 0 ? Math.round(dose * midRange(profile.bloomMult)) : 0,
+      stirs: midIntRange(profile.stirs),
+      swirls: midIntRange(profile.swirls),
+      bypass: midStepRange(profile.bypass, 5)
+    });
+  }
+
+  function genPourover(roast) {
+    const profile = ROAST_PROFILES[roast].pourover;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const dose = rstep(profile.dose[0], profile.dose[1], 0.5);
+      const ratio = rstep(profile.ratio[0], profile.ratio[1], 0.5);
+      const water = Math.round(dose * ratio);
+      const temp = rint(profile.temp[0], profile.temp[1]);
+      const opus = rstep(profile.opus[0], profile.opus[1], 0.1);
+      const bloomSec = rint(profile.bloomSec[0], profile.bloomSec[1]);
+      const bloomWaterTarget = Math.round(dose * rand(profile.bloomMult[0], profile.bloomMult[1]));
+      const bloomWater = clampPouroverBloomWater(water, bloomWaterTarget);
+      const pours = rint(profile.pours[0], profile.pours[1]);
+      const interval = pours > 1 ? rint(profile.interval[0], profile.interval[1]) : 0;
+      const swirls = rint(profile.swirls[0], profile.swirls[1]);
+
+      // totalTime ≈ bloom + (pours-1)*interval + drawdown
+      const drawdown = estimatePouroverDrawdown(opus, water, dose);
+      const total = bloomSec + (pours > 1 ? (pours - 1) * interval : 0) + drawdown;
+
+      // Guardrail: constrain total time.
+      if (total < 120 || total > 330) continue;
+
+      const remaining = Math.max(0, water - bloomWater);
+      if (remaining < 40) continue;
+      return buildPouroverRecipe({
+        roast, dose, ratio, water, temp, opus, bloomSec, bloomWater, pours, interval, swirls, total, remaining
+      });
+    }
+
+    const dose = midStepRange(profile.dose, 0.5);
+    const ratio = midStepRange(profile.ratio, 0.5);
+    const water = Math.round(dose * ratio);
+    const bloomSec = midIntRange(profile.bloomSec);
+    const bloomWater = clampPouroverBloomWater(water, Math.round(dose * midRange(profile.bloomMult)));
+    const pours = midIntRange(profile.pours);
+    const interval = pours > 1 ? midIntRange(profile.interval) : 0;
+    const opus = midStepRange(profile.opus, 0.1);
+    const drawdown = estimatePouroverDrawdown(opus, water, dose);
+    const total = Math.round(bloomSec + (pours > 1 ? (pours - 1) * interval : 0) + drawdown);
+
+    return buildPouroverRecipe({
+      roast,
+      dose,
+      ratio,
+      water,
+      temp: midIntRange(profile.temp),
+      opus,
+      bloomSec,
+      bloomWater,
+      pours,
+      interval,
+      swirls: midIntRange(profile.swirls),
+      total,
+      remaining: Math.max(0, water - bloomWater)
+    });
   }
 
   function generate() {
+    const roast = pickRoast();
     const method = pickMethod();
-    return method === "AeroPress" ? genAeropress() : genPourover();
+    return method === "AeroPress" ? genAeropress(roast) : genPourover(roast);
+  }
+
+  function renderSeedLine(recipe) {
+    const now = new Date().toLocaleString();
+    const pool = sanitizeRoasts(settings.roasts).map(roastLabel).join(", ");
+    const roastSummary = recipe && recipe.roast ? ` • Picked: ${roastLabel(recipe.roast)}.` : ".";
+    document.getElementById("seedline").textContent = `Generated at ${now} • Roast pool: ${pool}${roastSummary}`;
   }
 
   function render(recipe) {
@@ -238,8 +530,10 @@
     const rows = recipe.fields.map(([k, v]) => `<tr><td>${k}</td><td><strong>${v}</strong></td></tr>`).join("");
     const steps = recipe.steps.map(s => {
       const text = typeof s === "string" ? s : s.text;
-      const duration = typeof s === "object" ? s.duration : null;
-      const timerBtn = duration ? `<button class="timer-btn" data-duration="${duration}">Start ${mmss(duration)}</button>` : "";
+      const duration = typeof s === "object" ? Number(s.duration) : 0;
+      const timerBtn = duration > 0
+        ? `<button class="timer-btn" data-duration="${duration}" aria-pressed="false" aria-label="Start timer for ${mmss(duration)}">Start ${mmss(duration)}</button>`
+        : "";
       return `<li>${text}${timerBtn}</li>`;
     }).join("");
 
@@ -266,6 +560,7 @@
       })
     ].join("\n");
     card.dataset.plain = plain;
+    renderSeedLine(recipe);
   }
 
   const activeTimers = new Map();
@@ -283,37 +578,51 @@
       clearInterval(timer.intervalId);
       activeTimers.delete(btn);
       btn.classList.remove("running", "finished");
-      btn.textContent = `Start ${mmss(btn.dataset.duration)}`;
+      btn.textContent = `Start ${mmss(timer.duration)}`;
+      btn.setAttribute("aria-pressed", "false");
+      btn.setAttribute("aria-label", `Start timer for ${mmss(timer.duration)}`);
+      announce(`Stopped timer with ${mmss(timer.duration)} preset.`);
       return;
     }
 
-    const duration = parseInt(btn.dataset.duration, 10);
-    let remaining = duration;
+    const duration = Number.parseInt(btn.dataset.duration, 10);
+    if (!Number.isFinite(duration) || duration <= 0) return;
+    const endAt = Date.now() + duration * 1000;
 
     btn.classList.add("running");
     btn.classList.remove("finished");
-    btn.textContent = mmss(remaining);
+    btn.setAttribute("aria-pressed", "true");
+    announce(`Started timer for ${mmss(duration)}.`);
 
-    const intervalId = setInterval(() => {
-      remaining--;
+    let intervalId = null;
+    const tick = () => {
+      const remaining = Math.ceil((endAt - Date.now()) / 1000);
       if (remaining <= 0) {
         clearInterval(intervalId);
         activeTimers.delete(btn);
         btn.classList.remove("running");
         btn.classList.add("finished");
         btn.textContent = "Done!";
+        btn.setAttribute("aria-pressed", "false");
+        btn.setAttribute("aria-label", `Timer complete. Start ${mmss(duration)} timer`);
+        announce(`Timer finished after ${mmss(duration)}.`);
         setTimeout(() => {
           if (!activeTimers.has(btn) && btn.classList.contains("finished")) {
             btn.classList.remove("finished");
             btn.textContent = `Start ${mmss(duration)}`;
+            btn.setAttribute("aria-label", `Start timer for ${mmss(duration)}`);
           }
         }, 5000);
       } else {
         btn.textContent = mmss(remaining);
+        btn.setAttribute("aria-label", `Timer running: ${mmss(remaining)} remaining`);
       }
-    }, 1000);
+    };
 
-    activeTimers.set(btn, { intervalId });
+    tick();
+    intervalId = setInterval(tick, 250);
+
+    activeTimers.set(btn, { intervalId, duration, endAt });
   }
 
   document.addEventListener("click", (e) => {
@@ -323,10 +632,14 @@
   });
 
   // init on page load
+  setupRoastControls();
   const recipe = generate();
   render(recipe);
 
-  document.getElementById("regen").addEventListener("click", () => render(generate()));
+  document.getElementById("regen").addEventListener("click", () => {
+    render(generate());
+    announce("Generated a new recipe.");
+  });
 
   document.getElementById("copy").addEventListener("click", async () => {
     const txt = document.getElementById("card").dataset.plain || "";
@@ -335,15 +648,13 @@
       const btn = document.getElementById("copy");
       const old = btn.textContent;
       btn.textContent = "Copied";
+      announce("Recipe copied to clipboard.");
       setTimeout(() => (btn.textContent = old), 900);
     } catch {
+      announce("Clipboard copy failed.");
       alert("Clipboard copy failed. Select and copy manually:\n\n" + txt);
     }
   });
-
-  // lightweight “seed” line (not deterministic, just informational)
-  document.getElementById("seedline").textContent =
-    "Generated at " + new Date().toLocaleString() + " • Refresh for a new roll.";
 </script>
 </body>
 </html>
