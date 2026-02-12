@@ -7,119 +7,174 @@
   <style>
     :root {
       color-scheme: light dark;
-      --bg: #f5f7fa;
-      --text: #121826;
-      --muted: #526075;
-      --card-bg: #ffffff;
-      --border: rgba(112, 122, 140, 0.35);
-      --btn-hover: rgba(112, 122, 140, 0.14);
-      --timer-bg: rgba(112, 122, 140, 0.1);
-      --timer-border: rgba(112, 122, 140, 0.3);
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --text: #222222;
+      --muted: #666666;
+      --border: #cccccc;
+      --primary: #2563eb;
+      --primary-hover: #1e4fd7;
+      --timer-bg: rgba(37, 99, 235, 0.08);
+      --timer-border: rgba(37, 99, 235, 0.2);
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #0d111a;
+        --bg: #0f1115;
+        --surface: #1a1d24;
         --text: #e5e7eb;
         --muted: #9ca3af;
-        --card-bg: #151b28;
-        --border: rgba(148, 163, 184, 0.35);
-        --btn-hover: rgba(148, 163, 184, 0.2);
-        --timer-bg: rgba(148, 163, 184, 0.16);
-        --timer-border: rgba(148, 163, 184, 0.4);
+        --border: #3a3f4b;
+        --primary: #3b82f6;
+        --primary-hover: #2563eb;
+        --timer-bg: rgba(59, 130, 246, 0.15);
+        --timer-border: rgba(59, 130, 246, 0.3);
       }
     }
     body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-family: system-ui, -apple-system, sans-serif;
       margin: 0;
-      padding: 24px;
-      line-height: 1.35;
+      padding: 1rem;
+      line-height: 1.5;
       background: var(--bg);
       color: var(--text);
     }
-    .wrap { max-width: 920px; margin: 0 auto; }
-    header { display: flex; gap: 12px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
-    h1 { font-size: 20px; margin: 0; }
-    .sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
-    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 18px; }
-    @media (min-width: 860px) { .grid { grid-template-columns: 1fr 1fr; } }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: var(--surface);
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { font-size: 1.25rem; margin: 0; }
+    .sub { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 1.5rem; }
     .card {
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-      background: var(--card-bg);
+      border-radius: 6px;
+      padding: 1.25rem;
+      background: var(--surface);
     }
-    .title { display:flex; justify-content: space-between; gap: 10px; align-items: baseline; }
-    h2 { font-size: 16px; margin: 0; }
+    .title { display:flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 0.75rem; }
+    h2 { font-size: 1rem; margin: 0; font-weight: 600; }
     .pill {
-      font-size: 12px;
-      padding: 3px 10px;
+      font-size: 0.75rem;
+      padding: 2px 8px;
       border: 1px solid var(--border);
-      border-radius: 999px;
+      border-radius: 4px;
       color: var(--muted);
       white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
     }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-    td { padding: 6px 0; vertical-align: top; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    td { padding: 8px 0; vertical-align: top; border-bottom: 1px solid rgba(128,128,128,0.1); }
     td:first-child { width: 46%; color: var(--muted); }
-    .steps { margin: 10px 0 0 0; padding-left: 18px; }
-    .steps li { margin: 6px 0; }
-    .actions { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .steps { margin: 10px 0 0 0; padding-left: 1.25rem; font-size: 0.95rem; }
+    .steps li { margin: 8px 0; }
+    .actions { display:flex; gap: 8px; flex-wrap: wrap; }
     button {
       cursor: pointer;
-      border-radius: 12px;
+      border-radius: 4px;
       border: 1px solid var(--border);
-      background: transparent;
+      background: var(--surface);
       color: var(--text);
-      padding: 9px 12px;
-      font-size: 14px;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
     }
-    button:hover { background: var(--btn-hover); }
-    .roast-card { margin-top: 16px; }
+    button:hover { background: var(--bg); }
+    #regen { background: var(--primary); color: #ffffff; border: none; }
+    #regen:hover { background: var(--primary-hover); }
+    .roast-card { margin-top: 0; }
     .roast-group {
       border: 0;
-      margin: 10px 0 0 0;
+      margin: 0.75rem 0 0 0;
       padding: 0;
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 12px;
     }
     .roast-option {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 6px 12px;
       cursor: pointer;
       user-select: none;
-      font-size: 14px;
+      font-size: 0.9rem;
+      padding: 4px 0;
+      margin-right: 12px;
     }
-    .roast-option.active { background: var(--btn-hover); }
+    .roast-option:last-child { margin-right: 0; }
     .roast-option input {
+      appearance: none;
+      -webkit-appearance: none;
       margin: 0;
-      accent-color: #2563eb;
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--surface);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
     }
-    .tiny { font-size: 12px; color: var(--muted); margin-top: 10px; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    .roast-option input:checked {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .roast-option input:checked::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 2px;
+      width: 4px;
+      height: 9px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    .tiny { font-size: 0.75rem; color: var(--muted); margin-top: 1rem; }
+    .mono { font-family: ui-monospace, SFMono-Regular, monospace; }
 
     .timer-btn {
-      margin-left: 8px;
-      padding: 2px 8px;
-      font-size: 11px;
-      border-radius: 6px;
-      background: var(--timer-bg);
-      border: 1px solid var(--timer-border);
-      cursor: pointer;
-      vertical-align: middle;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
+      margin-top: 6px;
+      margin-bottom: 2px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 4px;
+      background: var(--timer-bg);
+      border: 1px solid var(--timer-border);
+      color: var(--primary);
+      cursor: pointer;
+      gap: 6px;
+      min-width: 100px;
+      min-height: 36px;
     }
-    .timer-btn:hover { background: var(--btn-hover); }
+    .timer-btn:hover { background: var(--timer-border); }
     .timer-btn.running {
-      background: #2563eb;
+      background: var(--primary);
       color: white;
-      border-color: #1d4ed8;
+      border-color: var(--primary);
     }
     .timer-btn.finished {
       background: #059669;
@@ -140,11 +195,11 @@
   </style>
 </head>
 <body>
-<div class="wrap">
+<div class="container">
   <header>
     <div>
       <h1>Random Coffee Recipe Generator</h1>
-      <div class="sub">Choose your available roasts, then generate a roast-tuned recipe. Uses Fellow Opus dial numbers.</div>
+      <div class="sub">Choose your available roasts, then generate a roast-tuned recipe.</div>
     </div>
     <div class="actions">
       <button id="regen" title="Generate without reloading">Generate new</button>
@@ -155,15 +210,14 @@
   <section class="card roast-card">
     <div class="title">
       <h2>Available Bean Roasts</h2>
-      <span class="pill">generation pool</span>
+      <span class="pill">pool</span>
     </div>
     <fieldset class="roast-group" id="roast-group">
       <legend class="sr-only">Select available roasts</legend>
-      <label class="roast-option"><input type="checkbox" name="roast" value="light">Light</label>
-      <label class="roast-option"><input type="checkbox" name="roast" value="medium">Medium</label>
-      <label class="roast-option"><input type="checkbox" name="roast" value="dark">Dark</label>
+      <label class="roast-option"><input type="checkbox" name="roast" value="light"> Light</label>
+      <label class="roast-option"><input type="checkbox" name="roast" value="medium"> Medium</label>
+      <label class="roast-option"><input type="checkbox" name="roast" value="dark"> Dark</label>
     </fieldset>
-    <div class="tiny">Random generation first chooses one enabled roast, then samples method parameters tuned for that roast.</div>
   </section>
 
   <div class="grid">
@@ -173,14 +227,13 @@
         <h2>Constraints & Notes</h2>
         <span class="pill">guardrails</span>
       </div>
-      <ul class="steps">
+      <ul class="steps" style="font-size: 0.85rem; opacity: 0.8;">
         <li>Values are sampled uniformly within ranges.</li>
-        <li>Roast is sampled uniformly from enabled options (<span class="mono">light / medium / dark</span>).</li>
-        <li>Pour-over total time is constrained to <span class="mono">2:00–5:30</span> (resampled if outside).</li>
-        <li>AeroPress avoids extreme combos (too fine + high dose) by resampling if <span class="mono">Opus &lt; 5.0</span> and <span class="mono">dose &gt; 18g</span>.</li>
+        <li>Roast is sampled uniformly from enabled options.</li>
+        <li>Pour-over total time is constrained to <span class="mono">2:00–5:30</span>.</li>
+        <li>AeroPress avoids extreme combos (too fine + high dose).</li>
         <li>Ratio-driven: dose and ratio are picked first; water is computed.</li>
       </ul>
-      <div class="tiny">Tip: If you want “more realistic” results, change sampling to triangular (center-weighted) in the JS.</div>
     </section>
   </div>
 
@@ -261,8 +314,6 @@
   function applyRoastSelectionUI(inputs = roastInputs) {
     for (const input of inputs) {
       input.checked = settings.roasts.includes(input.value);
-      const label = input.closest("label");
-      if (label) label.classList.toggle("active", input.checked);
     }
   }
 
@@ -532,9 +583,9 @@
       const text = typeof s === "string" ? s : s.text;
       const duration = typeof s === "object" ? Number(s.duration) : 0;
       const timerBtn = duration > 0
-        ? `<button class="timer-btn" data-duration="${duration}" aria-pressed="false" aria-label="Start timer for ${mmss(duration)}">Start ${mmss(duration)}</button>`
+        ? `<div><button class="timer-btn" data-duration="${duration}" aria-pressed="false" aria-label="Start timer for ${mmss(duration)}">Start ${mmss(duration)}</button></div>`
         : "";
-      return `<li>${text}${timerBtn}</li>`;
+      return `<li><div style="margin-bottom:2px">${text}</div>${timerBtn}</li>`;
     }).join("");
 
     card.innerHTML = `
