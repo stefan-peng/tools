@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AeroPress Test Plan Logger (LocalStorage)</title>
+  <style>
+    :root { --bg:#0b0c10; --panel:#12141a; --muted:#9aa3b2; --text:#e9edf5; --line:#242a35; --accent:#5aa9ff; --danger:#ff5a7a; --ok:#57d39b; }
+    * { box-sizing:border-box; }
+    html, body { height:100%; }
+    body { margin:0; overflow:hidden; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--text); }
+    header { padding:18px 20px; border-bottom:1px solid var(--line); background:linear-gradient(180deg, #0e1016 0%, #0b0c10 100%); position:sticky; top:0; z-index:5; }
+    header h1 { margin:0; font-size:18px; letter-spacing:.2px; }
+    header .sub { margin-top:6px; color:var(--muted); font-size:13px; line-height:1.35; }
+    main { padding:18px 20px 40px; max-width:1560px; margin:0 auto; }
+    .grid {
+      display:grid;
+      grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.1fr) minmax(520px, 1.6fr);
+      gap:16px;
+      align-items:stretch;
+      min-height:0;
+      height:calc(100vh - 120px);
+      height:calc(100dvh - 120px);
+    }
+    @media (max-width: 1240px){
+      .grid { grid-template-columns:1fr; height:auto; }
+      .card { overflow:visible; }
+      body { overflow:auto; }
+      header { position:static; }
+    }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow: 0 6px 18px rgba(0,0,0,.25); min-height:0; overflow:auto; }
+    .card h2 { margin:0 0 10px; font-size:14px; color:#dfe6f3; letter-spacing:.2px; }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .row3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+    label { display:block; font-size:12px; color:var(--muted); margin:8px 0 6px; }
+    input, select, textarea { width:100%; background:#0f1117; color:var(--text); border:1px solid var(--line); border-radius:10px; padding:10px 10px; font-size:13px; outline:none; }
+    textarea { min-height:88px; resize:vertical; }
+    input:focus, select:focus, textarea:focus { border-color: rgba(90,169,255,.65); box-shadow: 0 0 0 3px rgba(90,169,255,.12); }
+    .btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+    button { border:1px solid var(--line); background:#0f1117; color:var(--text); padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; }
+    button.primary { background: rgba(90,169,255,.16); border-color: rgba(90,169,255,.5); }
+    button.primary:hover { background: rgba(90,169,255,.22); }
+    button.danger { background: rgba(255,90,122,.14); border-color: rgba(255,90,122,.55); }
+    button.ok { background: rgba(87,211,155,.14); border-color: rgba(87,211,155,.55); }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    .pill { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#0f1117; color:var(--muted); font-size:12px; }
+    .pill b { color:var(--text); font-weight:600; }
+    .pill.done { border-color: rgba(87,211,155,.65); background: rgba(87,211,155,.18); color:#c8f4de; }
+    .pill.done b { color:#e9fff2; }
+    .plan { display:flex; flex-direction:column; gap:10px; }
+    .phase { padding:10px; border-radius:12px; border:1px dashed var(--line); background:rgba(255,255,255,.02); }
+    .phase .top { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+    .phase h3 { margin:0; font-size:13px; }
+    .phase p { margin:6px 0 0; color:var(--muted); font-size:12px; line-height:1.35; }
+    .phase .opts { margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; }
+    .small { font-size:12px; color:var(--muted); }
+    .kpi { display:flex; gap:10px; flex-wrap:wrap; }
+    .kpi .pill { background:rgba(255,255,255,.02); }
+    table { width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border:1px solid var(--line); border-radius:12px; }
+    th, td { padding:10px 10px; font-size:13px; border-bottom:1px solid var(--line); vertical-align:top; }
+    th { text-align:left; color:var(--muted); font-weight:600; background:#0f1117; }
+    tr:last-child td { border-bottom:none; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .muted { color:var(--muted); }
+    .right { text-align:right; }
+    .nowrap { white-space:nowrap; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    .hint { color:var(--muted); font-size:12px; line-height:1.35; margin-top:6px; }
+    .hr { height:1px; background:var(--line); margin:12px 0; }
+    .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:#0f1117; border:1px solid var(--line); border-radius:999px; padding:10px 14px; color:var(--text); font-size:13px; box-shadow:0 10px 30px rgba(0,0,0,.35); opacity:0; pointer-events:none; transition:opacity .2s ease; }
+    .toast.show { opacity:1; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>AeroPress Test Plan Logger</h1>
+  <div class="sub">
+    Single-file app. Stores all tests in <span class="mono">localStorage</span>. Designed for Kirkland Colombian Supremo + Fellow Opus + filter/method experiments.
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- Left: Test plan sequence -->
+    <section class="card">
+      <h2>Test plan sequence</h2>
+      <div class="plan" id="plan"></div>
+    </section>
+
+    <!-- Middle: New entry -->
+    <section class="card">
+      <h2 id="formTitle">New entry</h2>
+      <div class="kpi" style="margin-bottom:8px;">
+        <span class="pill">Next suggested ID: <b class="mono" id="nextId">—</b></span>
+        <span class="pill">Preferred phase: <b id="suggestedPhase">—</b></span>
+      </div>
+
+      <form id="entryForm" autocomplete="off">
+        <div class="row">
+          <div>
+            <label>Test ID</label>
+            <input id="testId" placeholder="e.g., F1 / M2 / G3 / custom" />
+          </div>
+          <div>
+            <label>Date/time</label>
+            <input id="dt" type="datetime-local" />
+          </div>
+        </div>
+
+        <label>Phase</label>
+        <select id="phase">
+          <option value="Baseline">Baseline</option>
+          <option value="Filter">Filter comparison</option>
+          <option value="Method">Method (standard/flow/inverted)</option>
+          <option value="Grind">Grind optimization</option>
+          <option value="Ratio">Ratio optimization</option>
+          <option value="Temperature">Temperature optimization</option>
+          <option value="Agitation">Agitation</option>
+          <option value="Time">Brew time</option>
+          <option value="Validation">Validation</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <div class="row3">
+          <div>
+            <label>Dose (g)</label>
+            <input id="dose" type="number" step="0.1" placeholder="18" />
+          </div>
+          <div>
+            <label>Water (g)</label>
+            <input id="water" type="number" step="1" placeholder="270" />
+          </div>
+          <div>
+            <label>Water temp (°C)</label>
+            <input id="temp" type="number" step="1" placeholder="94" />
+          </div>
+        </div>
+
+        <div class="row3">
+          <div>
+            <label>Grind (Opus setting)</label>
+            <input id="grind" type="number" step="0.1" placeholder="5.0" />
+          </div>
+          <div>
+            <label>Ratio (computed)</label>
+            <input id="ratio" placeholder="1:15.0" disabled />
+          </div>
+          <div>
+            <label>Total brew time</label>
+            <input id="brewTime" placeholder="e.g., 2:00" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Method</label>
+            <select id="method">
+              <option value="Standard cap">Standard cap</option>
+              <option value="Flow control cap">Flow control cap</option>
+              <option value="Inverted">Inverted</option>
+            </select>
+          </div>
+          <div>
+            <label>Filter</label>
+            <select id="filter">
+              <option value="Paper">Paper</option>
+              <option value="Metal">Metal</option>
+              <option value="Metal + paper">Metal + paper</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Agitation</label>
+            <select id="agitation">
+              <option value="10s vigorous initial">10s vigorous initial</option>
+              <option value="Minimal swirl only">Minimal swirl only</option>
+              <option value="Initial + mid swirl">Initial + mid swirl</option>
+              <option value="Continuous gentle swirl">Continuous gentle swirl</option>
+            </select>
+          </div>
+          <div>
+            <label>Press time</label>
+            <input id="pressTime" placeholder="e.g., 0:30" />
+          </div>
+        </div>
+
+        <div class="row3">
+          <div>
+            <label>Sweetness (1–5)</label>
+            <input id="sweetness" type="number" min="1" max="5" step="1" />
+          </div>
+          <div>
+            <label>Acidity (1–5)</label>
+            <input id="acidity" type="number" min="1" max="5" step="1" />
+          </div>
+          <div>
+            <label>Body (1–5)</label>
+            <input id="body" type="number" min="1" max="5" step="1" />
+          </div>
+        </div>
+
+        <div class="row3">
+          <div>
+            <label>Bitterness (1–5)</label>
+            <input id="bitterness" type="number" min="1" max="5" step="1" />
+          </div>
+          <div>
+            <label>Clarity (1–5)</label>
+            <input id="clarity" type="number" min="1" max="5" step="1" />
+          </div>
+          <div>
+            <label>Aftertaste (1–5)</label>
+            <input id="aftertaste" type="number" min="1" max="5" step="1" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Overall (1–5)</label>
+            <input id="overall" type="number" min="1" max="5" step="1" />
+          </div>
+          <div>
+            <label>Bloom</label>
+            <input id="bloom" placeholder="e.g., 30g / 0:30 (or none)" />
+          </div>
+        </div>
+
+        <label>Notes</label>
+        <textarea id="notes" placeholder="Flavor notes, defects, changes vs baseline, etc."></textarea>
+
+        <div class="btns">
+          <button type="submit" class="primary" id="saveBtn">Save</button>
+          <button type="button" id="clearBtn">Clear form</button>
+          <button type="button" class="danger" id="deleteBtn" disabled>Delete</button>
+        </div>
+        <div class="hint">
+          Tips: keep everything constant within a phase. Use “Overall” as the primary decision metric. Metal filters often raise body and oils; paper raises clarity.
+        </div>
+      </form>
+    </section>
+
+    <!-- Right: Log -->
+    <section class="card">
+      <h2>Log</h2>
+
+      <div class="row">
+        <div>
+          <label>Search</label>
+          <input id="search" placeholder="search notes, ID, method, filter..." />
+        </div>
+        <div>
+          <label>Phase filter</label>
+          <select id="phaseFilter">
+            <option value="">All phases</option>
+            <option>Baseline</option>
+            <option>Filter</option>
+            <option>Method</option>
+            <option>Grind</option>
+            <option>Ratio</option>
+            <option>Temperature</option>
+            <option>Agitation</option>
+            <option>Time</option>
+            <option>Validation</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Sort</label>
+          <select id="sort">
+            <option value="dt_desc">Newest first</option>
+            <option value="dt_asc">Oldest first</option>
+            <option value="overall_desc">Overall high → low</option>
+            <option value="overall_asc">Overall low → high</option>
+          </select>
+        </div>
+        <div>
+          <label>Quick actions</label>
+          <div class="btns" style="margin-top:0;">
+            <button type="button" class="ok" id="exportBtn">Export JSON</button>
+            <button type="button" id="importBtn">Import JSON</button>
+            <button type="button" class="danger" id="wipeBtn">Wipe all</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="kpi" id="kpis"></div>
+
+      <div class="hr"></div>
+
+      <div style="overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th class="nowrap">When</th>
+              <th class="nowrap">ID</th>
+              <th>Phase</th>
+              <th>Params</th>
+              <th class="nowrap right">Overall</th>
+              <th class="nowrap">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="6" class="muted">No entries yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="hint" style="margin-top:10px;">
+        Export creates a JSON file download. Import accepts a JSON file produced by this app.
+      </div>
+
+      <input id="fileInput" type="file" accept="application/json" style="display:none;" />
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const LS_KEY = "aeropress_test_log_v1";
+
+  const planModel = [
+    {
+      key: "Baseline",
+      title: "Baseline",
+      desc: "Establish control recipe (paper + standard cap) to anchor comparisons.",
+      ids: ["BASE1"],
+      defaults: { phase: "Baseline", filter: "Paper", method: "Standard cap" }
+    },
+    {
+      key: "Filter",
+      title: "Phase 1 — Filters",
+      desc: "Hold everything constant; compare paper vs metal vs hybrid.",
+      ids: ["F1","F2","F3"],
+      defaults: { phase: "Filter" }
+    },
+    {
+      key: "Method",
+      title: "Phase 2 — Method",
+      desc: "Using best filter(s), compare standard vs flow control vs inverted.",
+      ids: ["M1","M2","M3"],
+      defaults: { phase: "Method" }
+    },
+    {
+      key: "Grind",
+      title: "Phase 3 — Grind",
+      desc: "Sweep Opus around your current center to find sweetness peak without harshness.",
+      ids: ["G1","G2","G3","G4"],
+      defaults: { phase: "Grind" },
+      optionsHint: "Suggested: 4.5 / 5.0 / 5.5 / 6.0"
+    },
+    {
+      key: "Ratio",
+      title: "Phase 4 — Ratio",
+      desc: "Adjust ratio; keep grind fixed. Lower ratio = more intensity/body; higher = more clarity/sweetness.",
+      ids: ["R1","R2","R3","R4"],
+      defaults: { phase: "Ratio" },
+      optionsHint: "Suggested: 1:14 / 1:15 / 1:16 / 1:17"
+    },
+    {
+      key: "Temperature",
+      title: "Phase 5 — Temperature",
+      desc: "Adjust temperature; keep ratio and grind fixed. Medium roast often peaks ~92–94°C.",
+      ids: ["T1","T2","T3","T4"],
+      defaults: { phase: "Temperature" },
+      optionsHint: "Suggested: 90 / 92 / 94 / 96 °C"
+    },
+    {
+      key: "Agitation",
+      title: "Phase 6A — Agitation",
+      desc: "Agitation affects extraction strongly. Test a small set of agitation patterns.",
+      ids: ["A1","A2","A3","A4"],
+      defaults: { phase: "Agitation" }
+    },
+    {
+      key: "Time",
+      title: "Phase 6B — Brew time",
+      desc: "Total contact time sweep (keep everything else fixed).",
+      ids: ["B1","B2","B3","B4"],
+      defaults: { phase: "Time" },
+      optionsHint: "Suggested total: 1:30 / 2:00 / 2:30 / 3:00"
+    },
+    {
+      key: "Validation",
+      title: "Phase 7 — Validation",
+      desc: "Repeat best recipe 3–5 times across days to confirm repeatability.",
+      ids: ["V1","V2","V3","V4","V5"],
+      defaults: { phase: "Validation" }
+    }
+  ];
+
+  const $ = (id) => document.getElementById(id);
+
+  const form = $("entryForm");
+  const inputs = {
+    testId: $("testId"),
+    dt: $("dt"),
+    phase: $("phase"),
+    dose: $("dose"),
+    water: $("water"),
+    temp: $("temp"),
+    grind: $("grind"),
+    ratio: $("ratio"),
+    brewTime: $("brewTime"),
+    method: $("method"),
+    filter: $("filter"),
+    agitation: $("agitation"),
+    pressTime: $("pressTime"),
+    sweetness: $("sweetness"),
+    acidity: $("acidity"),
+    body: $("body"),
+    bitterness: $("bitterness"),
+    clarity: $("clarity"),
+    aftertaste: $("aftertaste"),
+    overall: $("overall"),
+    bloom: $("bloom"),
+    notes: $("notes"),
+  };
+
+  const ui = {
+    plan: $("plan"),
+    nextId: $("nextId"),
+    suggestedPhase: $("suggestedPhase"),
+    formTitle: $("formTitle"),
+    saveBtn: $("saveBtn"),
+    clearBtn: $("clearBtn"),
+    deleteBtn: $("deleteBtn"),
+    tbody: $("tbody"),
+    search: $("search"),
+    phaseFilter: $("phaseFilter"),
+    sort: $("sort"),
+    kpis: $("kpis"),
+    exportBtn: $("exportBtn"),
+    importBtn: $("importBtn"),
+    fileInput: $("fileInput"),
+    wipeBtn: $("wipeBtn"),
+    toast: $("toast"),
+  };
+
+  let state = {
+    entries: [],
+    editingId: null, // internal UUID
+  };
+
+  function toast(msg) {
+    ui.toast.textContent = msg;
+    ui.toast.classList.add("show");
+    setTimeout(() => ui.toast.classList.remove("show"), 1600);
+  }
+
+  function uid() {
+    return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      state.entries = raw ? JSON.parse(raw) : [];
+    } catch {
+      state.entries = [];
+    }
+  }
+
+  function save() {
+    localStorage.setItem(LS_KEY, JSON.stringify(state.entries));
+  }
+
+  function nowLocalDT() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth()+1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mi = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  }
+
+  function computeRatio(dose, water) {
+    const d = Number(dose);
+    const w = Number(water);
+    if (!isFinite(d) || !isFinite(w) || d <= 0 || w <= 0) return "";
+    const r = (w / d);
+    return `1:${r.toFixed(1)}`;
+  }
+
+  function updateRatio() {
+    inputs.ratio.value = computeRatio(inputs.dose.value, inputs.water.value);
+  }
+
+  function renderPlan() {
+    ui.plan.innerHTML = "";
+    const completed = new Set(state.entries.map(e => (e.testId || "").trim().toUpperCase()));
+
+    for (const p of planModel) {
+      const doneCount = p.ids.filter(id => completed.has(id)).length;
+      const total = p.ids.length;
+
+      const div = document.createElement("div");
+      div.className = "phase";
+      div.innerHTML = `
+        <div class="top">
+          <div>
+            <h3>${p.title}</h3>
+            <p>${p.desc}</p>
+            ${p.optionsHint ? `<p class="small">Notes: ${p.optionsHint}</p>` : ``}
+          </div>
+          <div class="pill"><span class="muted">Done</span> <b>${doneCount}/${total}</b></div>
+        </div>
+        <div class="opts" aria-label="Suggested IDs">
+          ${p.ids.map(id => `<span class="pill${completed.has(id) ? " done" : ""}"><b class="mono">${id}</b></span>`).join("")}
+        </div>
+        <div class="btns">
+          <button type="button" class="primary" data-autofill="${p.key}">Start next in this phase</button>
+        </div>
+      `;
+      ui.plan.appendChild(div);
+    }
+
+    ui.plan.querySelectorAll("[data-autofill]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const key = btn.getAttribute("data-autofill");
+        autofillNextForPhase(key);
+      });
+    });
+  }
+
+  function nextSuggested() {
+    const used = new Set(state.entries.map(e => (e.testId || "").trim().toUpperCase()));
+    for (const p of planModel) {
+      for (const id of p.ids) {
+        if (!used.has(id)) return { id, phase: p.defaults?.phase || p.key };
+      }
+    }
+    return { id: "CUSTOM", phase: "Other" };
+  }
+
+  function autofillNextForPhase(phaseKeyOrName) {
+    const used = new Set(state.entries.map(e => (e.testId || "").trim().toUpperCase()));
+    const p = planModel.find(x => x.key === phaseKeyOrName) || planModel.find(x => x.defaults?.phase === phaseKeyOrName) || null;
+
+    // Starting a planned run should always create a new entry, not overwrite edits.
+    clearForm(true);
+
+    inputs.dt.value = nowLocalDT();
+
+    if (!p) {
+      inputs.phase.value = "Other";
+      inputs.testId.value = "CUSTOM";
+      toast("Autofilled: Other");
+      return;
+    }
+
+    const nextId = p.ids.find(id => !used.has(id)) || "CUSTOM";
+    inputs.testId.value = nextId;
+    if (p.defaults?.phase) inputs.phase.value = p.defaults.phase;
+
+    // Baseline defaults
+    if (p.defaults?.filter) inputs.filter.value = p.defaults.filter;
+    if (p.defaults?.method) inputs.method.value = p.defaults.method;
+
+    // Reasonable baseline if empty
+    if (!inputs.dose.value) inputs.dose.value = 18;
+    if (!inputs.water.value) inputs.water.value = 270;
+    if (!inputs.temp.value) inputs.temp.value = 94;
+    if (!inputs.grind.value) inputs.grind.value = 5.0;
+    if (!inputs.brewTime.value) inputs.brewTime.value = "2:00";
+    if (!inputs.pressTime.value) inputs.pressTime.value = "0:30";
+    if (!inputs.bloom.value) inputs.bloom.value = "30g / 0:30";
+
+    updateRatio();
+    toast(`Autofilled: ${p.title} (${nextId})`);
+  }
+
+  function clearForm(resetEditing = true) {
+    form.reset();
+    inputs.dt.value = nowLocalDT();
+    inputs.ratio.value = "";
+    if (resetEditing) {
+      state.editingId = null;
+      ui.formTitle.textContent = "New entry";
+      ui.deleteBtn.disabled = true;
+    }
+  }
+
+  function readForm() {
+    const e = {
+      id: state.editingId || uid(),
+      testId: inputs.testId.value.trim(),
+      dt: inputs.dt.value || nowLocalDT(),
+      phase: inputs.phase.value,
+      dose: inputs.dose.value !== "" ? Number(inputs.dose.value) : null,
+      water: inputs.water.value !== "" ? Number(inputs.water.value) : null,
+      temp: inputs.temp.value !== "" ? Number(inputs.temp.value) : null,
+      grind: inputs.grind.value !== "" ? Number(inputs.grind.value) : null,
+      ratio: inputs.ratio.value || "",
+      brewTime: inputs.brewTime.value.trim(),
+      method: inputs.method.value,
+      filter: inputs.filter.value,
+      agitation: inputs.agitation.value,
+      pressTime: inputs.pressTime.value.trim(),
+      bloom: inputs.bloom.value.trim(),
+      scores: {
+        sweetness: numOrNull(inputs.sweetness.value),
+        acidity: numOrNull(inputs.acidity.value),
+        body: numOrNull(inputs.body.value),
+        bitterness: numOrNull(inputs.bitterness.value),
+        clarity: numOrNull(inputs.clarity.value),
+        aftertaste: numOrNull(inputs.aftertaste.value),
+        overall: numOrNull(inputs.overall.value),
+      },
+      notes: inputs.notes.value.trim(),
+      meta: {
+        coffee: "Kirkland Colombian Supremo",
+        grinder: "Fellow Opus",
+      }
+    };
+    return e;
+  }
+
+  function numOrNull(v) {
+    if (v === "" || v === null || v === undefined) return null;
+    const n = Number(v);
+    return isFinite(n) ? n : null;
+  }
+
+  function validateEntry(e) {
+    // Soft validation: allow partial, but require Test ID.
+    if (!e.testId) return "Test ID is required.";
+    return null;
+  }
+
+  function upsertEntry(e) {
+    const idx = state.entries.findIndex(x => x.id === e.id);
+    if (idx >= 0) state.entries[idx] = e;
+    else state.entries.push(e);
+    save();
+  }
+
+  function deleteEntry(id) {
+    state.entries = state.entries.filter(e => e.id !== id);
+    save();
+  }
+
+  function parseDT(dt) {
+    const t = Date.parse(dt);
+    return isFinite(t) ? t : 0;
+  }
+
+  function formatWhen(dt) {
+    // dt is datetime-local string: YYYY-MM-DDTHH:mm
+    if (!dt) return "—";
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return dt;
+    return d.toLocaleString([], { year:"2-digit", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" });
+  }
+
+  function entryParamsSummary(e) {
+    const bits = [];
+    if (e.dose && e.water) bits.push(`${e.dose}g → ${e.water}g (${computeRatio(e.dose, e.water)})`);
+    else if (e.ratio) bits.push(e.ratio);
+    if (e.grind != null) bits.push(`Opus ${e.grind}`);
+    if (e.temp != null) bits.push(`${e.temp}°C`);
+    bits.push(e.filter);
+    bits.push(e.method);
+    if (e.brewTime) bits.push(`brew ${e.brewTime}`);
+    if (e.pressTime) bits.push(`press ${e.pressTime}`);
+    return bits.join(" · ");
+  }
+
+  function filteredSortedEntries() {
+    const q = ui.search.value.trim().toLowerCase();
+    const phase = ui.phaseFilter.value;
+    let arr = [...state.entries];
+
+    if (phase) arr = arr.filter(e => e.phase === phase);
+    if (q) {
+      arr = arr.filter(e => {
+        const hay = [
+          e.testId, e.phase, e.method, e.filter, e.agitation, e.brewTime, e.pressTime,
+          e.notes, e.ratio, String(e.dose ?? ""), String(e.water ?? ""), String(e.temp ?? ""), String(e.grind ?? "")
+        ].join(" ").toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    const sort = ui.sort.value;
+    arr.sort((a,b) => {
+      if (sort === "dt_desc") return parseDT(b.dt) - parseDT(a.dt);
+      if (sort === "dt_asc") return parseDT(a.dt) - parseDT(b.dt);
+      const oa = a.scores?.overall ?? -Infinity;
+      const ob = b.scores?.overall ?? -Infinity;
+      if (sort === "overall_desc") return (ob - oa) || (parseDT(b.dt) - parseDT(a.dt));
+      if (sort === "overall_asc") return (oa - ob) || (parseDT(b.dt) - parseDT(a.dt));
+      return 0;
+    });
+
+    return arr;
+  }
+
+  function renderKPIs(entries) {
+    const total = state.entries.length;
+    const shown = entries.length;
+
+    const overallVals = entries.map(e => e.scores?.overall).filter(v => v != null);
+    const avg = overallVals.length ? (overallVals.reduce((a,b)=>a+b,0)/overallVals.length).toFixed(2) : "—";
+    const best = entries
+      .filter(e => e.scores?.overall != null)
+      .sort((a,b)=> (b.scores.overall - a.scores.overall) || (parseDT(b.dt)-parseDT(a.dt)))[0];
+
+    const bestTxt = best ? `${best.testId} (${best.scores.overall})` : "—";
+
+    ui.kpis.innerHTML = `
+      <span class="pill">Entries: <b>${shown}</b><span class="muted">/ ${total}</span></span>
+      <span class="pill">Avg overall (shown): <b>${avg}</b></span>
+      <span class="pill">Best (shown): <b class="mono">${escapeHtml(bestTxt)}</b></span>
+    `;
+  }
+
+  function escapeHtml(s) {
+    return (s ?? "").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function renderTable() {
+    const entries = filteredSortedEntries();
+    renderKPIs(entries);
+
+    if (!entries.length) {
+      ui.tbody.innerHTML = `<tr><td colspan="6" class="muted">No entries match the current filters.</td></tr>`;
+      return;
+    }
+
+    ui.tbody.innerHTML = entries.map(e => {
+      const overall = e.scores?.overall;
+      const overallTxt = overall == null ? "—" : overall.toFixed(0);
+      const safeId = escapeHtml(e.id);
+      return `
+        <tr>
+          <td class="nowrap">${escapeHtml(formatWhen(e.dt))}</td>
+          <td class="nowrap mono">${escapeHtml((e.testId || "—").toUpperCase())}</td>
+          <td>${escapeHtml(e.phase || "—")}</td>
+          <td>${escapeHtml(entryParamsSummary(e))}${e.notes ? `<div class="small" style="margin-top:6px;">${escapeHtml(e.notes)}</div>` : ""}</td>
+          <td class="nowrap right"><b>${escapeHtml(overallTxt)}</b></td>
+          <td class="nowrap">
+            <div class="actions">
+              <button type="button" data-edit="${safeId}">Edit</button>
+              <button type="button" class="danger" data-del="${safeId}">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    ui.tbody.querySelectorAll("[data-edit]").forEach(btn => {
+      btn.addEventListener("click", () => startEdit(btn.getAttribute("data-edit")));
+    });
+    ui.tbody.querySelectorAll("[data-del]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-del");
+        if (confirm("Delete this entry?")) {
+          deleteEntry(id);
+          if (state.editingId === id) clearForm(true);
+          renderAll();
+          toast("Deleted");
+        }
+      });
+    });
+  }
+
+  function startEdit(id) {
+    const e = state.entries.find(x => x.id === id);
+    if (!e) return;
+
+    state.editingId = e.id;
+    ui.formTitle.textContent = `Edit entry (${(e.testId || "").toUpperCase()})`;
+    ui.deleteBtn.disabled = false;
+
+    inputs.testId.value = e.testId || "";
+    inputs.dt.value = e.dt || nowLocalDT();
+    inputs.phase.value = e.phase || "Other";
+    inputs.dose.value = e.dose ?? "";
+    inputs.water.value = e.water ?? "";
+    inputs.temp.value = e.temp ?? "";
+    inputs.grind.value = e.grind ?? "";
+    inputs.brewTime.value = e.brewTime || "";
+    inputs.method.value = e.method || "Standard cap";
+    inputs.filter.value = e.filter || "Paper";
+    inputs.agitation.value = e.agitation || "10s vigorous initial";
+    inputs.pressTime.value = e.pressTime || "";
+    inputs.bloom.value = e.bloom || "";
+    inputs.sweetness.value = e.scores?.sweetness ?? "";
+    inputs.acidity.value = e.scores?.acidity ?? "";
+    inputs.body.value = e.scores?.body ?? "";
+    inputs.bitterness.value = e.scores?.bitterness ?? "";
+    inputs.clarity.value = e.scores?.clarity ?? "";
+    inputs.aftertaste.value = e.scores?.aftertaste ?? "";
+    inputs.overall.value = e.scores?.overall ?? "";
+    inputs.notes.value = e.notes || "";
+
+    updateRatio();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function updateSuggested() {
+    const n = nextSuggested();
+    ui.nextId.textContent = n.id;
+    ui.suggestedPhase.textContent = n.phase;
+
+    // Also prefill the "Test ID" placeholder if empty and not editing.
+    if (!state.editingId && !inputs.testId.value.trim()) {
+      inputs.testId.value = n.id === "CUSTOM" ? "" : n.id;
+      inputs.phase.value = n.phase === "Other" ? "Other" : inputs.phase.value;
+    }
+  }
+
+  function exportJSON() {
+    const payload = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      entries: state.entries
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "aeropress_test_log.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("Exported JSON");
+  }
+
+  async function importJSON(file) {
+    const text = await file.text();
+    let parsed;
+    try { parsed = JSON.parse(text); }
+    catch { alert("Invalid JSON."); return; }
+
+    const importedEntries = Array.isArray(parsed) ? parsed
+      : Array.isArray(parsed.entries) ? parsed.entries
+      : null;
+
+    if (!importedEntries) { alert("JSON does not contain entries."); return; }
+
+    // Merge by internal id; if missing id, assign.
+    const existingById = new Map(state.entries.map(e => [e.id, e]));
+    for (const e of importedEntries) {
+      const entry = { ...e };
+      if (!entry.id) entry.id = uid();
+      existingById.set(entry.id, entry);
+    }
+    state.entries = Array.from(existingById.values());
+    save();
+    renderAll();
+    toast("Imported JSON");
+  }
+
+  function renderAll() {
+    renderPlan();
+    renderTable();
+    updateSuggested();
+  }
+
+  // Events
+  form.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    updateRatio();
+    const e = readForm();
+    const err = validateEntry(e);
+    if (err) { alert(err); return; }
+
+    // Ensure ratio stored if dose+water present
+    if (e.dose && e.water) e.ratio = computeRatio(e.dose, e.water);
+
+    upsertEntry(e);
+    toast(state.editingId ? "Saved changes" : "Saved");
+    clearForm(true);
+    renderAll();
+  });
+
+  ui.clearBtn.addEventListener("click", () => { clearForm(true); updateSuggested(); toast("Cleared"); });
+  ui.deleteBtn.addEventListener("click", () => {
+    if (!state.editingId) return;
+    const e = state.entries.find(x => x.id === state.editingId);
+    if (!e) return;
+    if (confirm(`Delete entry ${(e.testId || "").toUpperCase()}?`)) {
+      deleteEntry(e.id);
+      clearForm(true);
+      renderAll();
+      toast("Deleted");
+    }
+  });
+
+  ui.search.addEventListener("input", renderTable);
+  ui.phaseFilter.addEventListener("change", renderTable);
+  ui.sort.addEventListener("change", renderTable);
+
+  ["dose","water"].forEach(id => $(id).addEventListener("input", updateRatio));
+
+  ui.exportBtn.addEventListener("click", exportJSON);
+  ui.importBtn.addEventListener("click", () => ui.fileInput.click());
+  ui.fileInput.addEventListener("change", async () => {
+    const f = ui.fileInput.files && ui.fileInput.files[0];
+    ui.fileInput.value = "";
+    if (!f) return;
+    await importJSON(f);
+  });
+
+  ui.wipeBtn.addEventListener("click", () => {
+    if (!state.entries.length) return;
+    if (confirm("Wipe ALL entries from localStorage? This cannot be undone.")) {
+      state.entries = [];
+      save();
+      clearForm(true);
+      renderAll();
+      toast("Wiped");
+    }
+  });
+
+  // Init
+  load();
+  clearForm(true);
+  renderAll();
+
+  // If no entries, gently prefill baseline defaults
+  if (!state.entries.length) {
+    autofillNextForPhase("Baseline");
+  }
+})();
+</script>
+</body>
+</html>
